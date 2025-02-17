@@ -1,0 +1,22 @@
+<h1>Same origin, no sandbox</h1>
+
+<script type="module">
+	import { MessagePeer } from '/core.js';
+
+	const client = new MessagePeer({
+		id: 'client-1',
+	});
+
+	client.connect('host', {
+		window: window.parent,
+	});
+
+	client.send(
+		{
+			type: 'test',
+			version: '1.0',
+			data: 'same origin, no sandbox',
+		},
+		{ to: ['host'] },
+	);
+</script>

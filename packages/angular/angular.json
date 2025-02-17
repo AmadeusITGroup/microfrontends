@@ -1,0 +1,40 @@
+{
+	"$schema": "../../node_modules/@angular/cli/lib/config/schema.json",
+	"version": 1,
+	"newProjectRoot": ".",
+	"projects": {
+		"microfrontends-angular": {
+			"projectType": "library",
+			"root": "lib",
+			"sourceRoot": "lib",
+			"prefix": "lib",
+			"architect": {
+				"build": {
+					"builder": "@angular-devkit/build-angular:ng-packagr",
+					"options": {
+						"project": "lib/ng-package.json"
+					},
+					"configurations": {
+						"production": {
+							"tsConfig": "lib/tsconfig.lib.prod.json"
+						},
+						"development": {
+							"tsConfig": "lib/tsconfig.lib.json"
+						}
+					},
+					"defaultConfiguration": "production"
+				},
+				"lint": {
+					"builder": "@angular-eslint/builder:lint",
+					"options": {
+						"lintFilePatterns": ["lib/**/*.ts", "lib/**/*.html", "./*.ts"],
+						"eslintConfig": "eslint.config.js"
+					}
+				}
+			}
+		}
+	},
+	"cli": {
+		"schematicCollections": ["angular-eslint"]
+	}
+}

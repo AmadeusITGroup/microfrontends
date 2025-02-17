@@ -1,0 +1,107 @@
+{
+	"name": "root",
+	"description": "Amadeus Micro Frontend Toolkit",
+	"private": true,
+	"bugs": "https://github.com/AmadeusITGroup/microfrontends/issues",
+	"license": "MIT",
+	"engines": {
+		"node": "^22.11.0",
+		"npm": "^10.9.0"
+	},
+	"packageManager": "npm@10.9.0",
+	"keywords": [
+		"micro frontends",
+		"mfe",
+		"message channel"
+	],
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/AmadeusITGroup/microfrontends.git"
+	},
+	"type": "module",
+	"scripts": {
+		"build": "wireit",
+		"demo": "wireit",
+		"test": "wireit",
+		"lint": "wireit",
+		"format:check": "prettier --check .",
+		"ci": "wireit",
+		"postinstall": "husky"
+	},
+	"wireit": {
+		"build": {
+			"dependencies": [
+				"./packages/core:build",
+				"./packages/angular:build",
+				"./demos/app-angular:build"
+			]
+		},
+		"demo": {
+			"dependencies": [
+				"./demos/app-angular:demo"
+			]
+		},
+		"test": {
+			"dependencies": [
+				"./packages/core:test",
+				"./packages/core-e2e:test",
+				"./packages/angular:test"
+			]
+		},
+		"lint": {
+			"dependencies": [
+				"./packages/core:lint",
+				"./packages/core-e2e:lint",
+				"./packages/angular:lint",
+				"./demos/app-angular:lint"
+			]
+		},
+		"ci": {
+			"dependencies": [
+				"build",
+				"lint",
+				"test",
+				"format:check"
+			]
+		}
+	},
+	"dependencies": {
+		"@angular/common": "^19.1.0",
+		"@angular/compiler": "^19.1.0",
+		"@angular/core": "^19.1.0",
+		"@angular/platform-browser": "^19.1.0",
+		"@angular/platform-browser-dynamic": "^19.1.0",
+		"@angular/router": "^19.1.0",
+		"rxjs": "~7.8.0",
+		"tslib": "^2.8.1",
+		"zone.js": "~0.15.0"
+	},
+	"devDependencies": {
+		"@angular-devkit/build-angular": "^19.1.0",
+		"@angular/cli": "^19.1.0",
+		"@angular/compiler-cli": "^19.1.0",
+		"@commitlint/cli": "^19.7.1",
+		"@eslint/js": "^9.20.0",
+		"@types/jest": "^29.5.14",
+		"angular-eslint": "^19.1.0",
+		"eslint": "^9.20.1",
+		"husky": "^9.1.7",
+		"jest": "~29.7.0",
+		"jest-environment-jsdom": "^29.7.0",
+		"jest-preset-angular": "^14.5.1",
+		"livereload": "^0.9.3",
+		"local-web-server": "^5.4.0",
+		"npm-run-all": "^4.1.5",
+		"prettier": "^3.5.0",
+		"ts-jest": "~29.1.2",
+		"ts-node": "^10.9.2",
+		"typedoc": "^0.27.7",
+		"typescript": "~5.7.2",
+		"typescript-eslint": "^8.24.0",
+		"wireit": "^0.14.11"
+	},
+	"workspaces": [
+		"packages/*",
+		"demos/*"
+	]
+}

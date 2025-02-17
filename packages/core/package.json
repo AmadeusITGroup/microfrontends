@@ -1,0 +1,81 @@
+{
+	"name": "@amadeus-it-group/microfrontends",
+	"version": "0.0.0",
+	"description": "Amadeus Micro Frontend Toolkit",
+	"main": "dist/index.js",
+	"type": "module",
+	"files": [
+		"dist",
+		"bundle"
+	],
+	"scripts": {
+		"build": "wireit",
+		"lint": "wireit",
+		"test": "wireit",
+		"tdd": "jest --watch",
+		"watch": "wireit",
+		"pack": "npm pack"
+	},
+	"wireit": {
+		"build": {
+			"dependencies": [
+				"compile",
+				"bundle"
+			]
+		},
+		"watch": {
+			"command": "npm run build --watch",
+			"service": true
+		},
+		"compile": {
+			"command": "tsc --build",
+			"clean": "if-file-deleted",
+			"files": [
+				"src/**/*.*",
+				"tsconfig.json"
+			],
+			"output": [
+				"dist/**"
+			],
+			"dependencies": [
+				"lint"
+			]
+		},
+		"bundle": {
+			"command": "npx esbuild dist/index.js --bundle --format=esm --outfile=bundle/core.js",
+			"clean": "if-file-deleted",
+			"files": [
+				"dist/**/*.*"
+			],
+			"output": [
+				"bundle/**"
+			],
+			"dependencies": [
+				"compile"
+			]
+		},
+		"test": {
+			"command": "jest --coverage",
+			"files": [
+				"src/**/*.*"
+			],
+			"output": [
+				"coverage/**"
+			],
+			"dependencies": [
+				"lint"
+			]
+		},
+		"lint": {
+			"command": "eslint",
+			"files": [
+				"src/**/*.*"
+			],
+			"output": []
+		}
+	},
+	"devDependencies": {
+		"core-js": "^3.40.0",
+		"esbuild": "^0.25.0"
+	}
+}

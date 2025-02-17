@@ -1,0 +1,130 @@
+import { TestBed } from '@angular/core/testing';
+import {
+	MESSAGE_PEER_CONFIG,
+	MESSAGE_PEER_CONNECT_OPTIONS,
+	MESSAGE_PEER_LISTEN_OPTIONS,
+	MessagePeerConfig,
+	MessagePeerService,
+	MessagePeerServiceType,
+} from './message-peer.service';
+import type { Message, PeerConnectionOptions } from '@amadeus-it-group/microfrontends';
+import { MessagePeer } from '@amadeus-it-group/microfrontends';
+
+describe('MessagePeerService', () => {
+	let service: MessagePeerServiceType<Message>;
+	let config: MessagePeerConfig;
+
+	beforeEach(() => {
+		config = {
+			id: 'test-peer',
+			knownMessages: [],
+		};
+
+		TestBed.configureTestingModule({
+			providers: [MessagePeerService, { provide: MESSAGE_PEER_CONFIG, useValue: config }],
+		});
+
+		service = TestBed.inject(MessagePeerService);
+	});
+
+	it('should be created', () => {
+		expect(service).toBeTruthy();
+	});
+
+	it('should have the correct id', () => {
+		expect(service.id).toBe(config.id);
+	});
+
+	it('should register a message', () => {
+		const message = { type: 'new', version: '1.0' };
+		service.registerMessage(message);
+		expect(service.knownPeers.get(config.id)).toContain(message);
+	});
+
+	it('should send a message', () => {
+		const message = { type: 'new', version: '1.0' };
+		const sendSpy = jest.spyOn(MessagePeer.prototype, 'send').mockImplementation();
+		service.send(message);
+		expect(sendSpy).toHaveBeenCalledWith(message, undefined);
+	});
+
+	it('should listen for messages', async () => {
+		const peerId = 'peer-id';
+		const listenSpy = jest.spyOn(MessagePeer.prototype, 'listen').mockImplementation();
+		await service.listen(peerId);
+		expect(listenSpy).toHaveBeenCalledWith(peerId, undefined);
+	});
+
+	it('should connect to a peer', async () => {
+		const peerId = 'peer-id';
+		const connectSpy = jest.spyOn(MessagePeer.prototype, 'connect').mockImplementation();
+		await service.connect(peerId);
+		expect(connectSpy).toHaveBeenCalledWith(peerId, undefined);
+	});
+
+	it('should disconnect from a peer', () => {
+		const peerId = 'peer-id';
+		const disconnectSpy = jest.spyOn(MessagePeer.prototype, 'disconnect').mockImplementation();
+		service.disconnect(peerId);
+		expect(disconnectSpy).toHaveBeenCalledWith(peerId);
+	});
+});
+
+describe('MessagePeerService DI overrides', () => {
+	let connectSpy: jest.SpyInstance;
+	let listenSpy: jest.SpyInstance;
+
+	const connectOptions: PeerConnectionOptions = {
+		window: 'mocked connect window' as any,
+		origin: 'mocked origin',
+	};
+
+	const listenOptions: PeerConnectionOptions = {
+		window: 'mocked listen window' as any,
+		origin: 'mocked listen origin',
+	};
+
+	beforeEach(() => {
+		connectSpy = jest.spyOn(MessagePeer.prototype, 'connect').mockImplementation();
+		listenSpy = jest.spyOn(MessagePeer.prototype, 'listen').mockImplementation();
+
+		TestBed.configureTestingModule({
+			providers: [
+				MessagePeerService,
+				{
+					provide: MESSAGE_PEER_CONFIG,
+					useValue: {
+						id: 'blah',
+						knownMessages: [{ type: 'test', version: '1.0' }],
+					},
+				},
+				{ provide: MESSAGE_PEER_CONNECT_OPTIONS, useValue: connectOptions },
+				{ provide: MESSAGE_PEER_LISTEN_OPTIONS, useValue: listenOptions },
+			],
+		});
+	});
+
+	afterEach(() => {
+		connectSpy.mockRestore();
+		listenSpy.mockRestore();
+	});
+
+	test('should use the provided DI options', () => {
+		const service = TestBed.inject(MessagePeerService);
+
+		// create options
+		expect(service.id).toBe('blah');
+		expect(service.knownPeers.get('blah')).toEqual([{ type: 'test', version: '1.0' }]);
+
+		// connect options
+		service.connect('A');
+		service.listen('B');
+		expect(connectSpy).toHaveBeenCalledWith('A', { ...connectOptions });
+		expect(listenSpy).toHaveBeenCalledWith('B', { ...listenOptions });
+
+		service.connect('C', { origin: 'replaced' });
+		service.listen('D', { origin: 'replaced' });
+		expect(connectSpy).toHaveBeenCalledWith('C', { ...connectOptions, origin: 'replaced' });
+		expect(listenSpy).toHaveBeenCalledWith('D', { ...listenOptions, origin: 'replaced' });
+	});
+});

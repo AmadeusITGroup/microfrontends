@@ -1,0 +1,54 @@
+{
+	"name": "@amadeus-it-group/microfrontends-angular",
+	"private": true,
+	"description": "Amadeus Micro Frontend Toolkit for Angular",
+	"type": "module",
+	"scripts": {
+		"build": "wireit",
+		"test": "wireit",
+		"tdd": "jest --watch",
+		"lint": "wireit"
+	},
+	"wireit": {
+		"build": {
+			"command": "ng build",
+			"files": [
+				"lib/**",
+				"angular.json",
+				"tsconfig.json"
+			],
+			"output": [
+				"dist/**"
+			],
+			"dependencies": [
+				"../core:build",
+				"lint"
+			]
+		},
+		"test": {
+			"command": "jest --coverage",
+			"files": [
+				"lib/**/*.*"
+			],
+			"output": [
+				"coverage/**"
+			],
+			"dependencies": [
+				"lint"
+			]
+		},
+		"lint": {
+			"command": "eslint",
+			"files": [
+				"lib/**/*.*"
+			],
+			"output": []
+		}
+	},
+	"dependencies": {
+		"@amadeus-it-group/microfrontends": "file:../core"
+	},
+	"devDependencies": {
+		"ng-packagr": "^19.1.0"
+	}
+}

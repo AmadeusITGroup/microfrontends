@@ -1,0 +1,51 @@
+{
+	"name": "core-e2e",
+	"private": true,
+	"scripts": {
+		"test": "wireit",
+		"tdd": "wireit",
+		"lint": "wireit",
+		"serve": "run-p serve-cases-1 serve-cases-2 serve-lib",
+		"serve-lib": "ws -d ../../node_modules/@amadeus-it-group/microfrontends/bundle -p 8090 -z",
+		"serve-cases-1": "ws -d cases -p 8091 -z --rewrite '/core.js -> http://localhost:8090/core.js'",
+		"serve-cases-2": "ws -d cases -p 8092 -z --rewrite '/core.js -> http://localhost:8090/core.js'"
+	},
+	"wireit": {
+		"tdd": {
+			"command": "playwright test --ui",
+			"dependencies": [
+				"../core:watch"
+			]
+		},
+		"test": {
+			"command": "playwright test",
+			"dependencies": [
+				"../core:build"
+			],
+			"files": [
+				"cases/**",
+				"tests/**",
+				"./*.*"
+			],
+			"output": [
+				"test-results/**"
+			]
+		},
+		"lint": {
+			"command": "eslint",
+			"files": [
+				"cases/**",
+				"tests/**",
+				"./*.*"
+			],
+			"output": []
+		}
+	},
+	"dependencies": {
+		"@amadeus-it-group/microfrontends": "file:../../core"
+	},
+	"devDependencies": {
+		"@playwright/test": "^1.49.0",
+		"@types/node": "^22.10.1"
+	}
+}

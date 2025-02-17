@@ -1,0 +1,38 @@
+<h1>CLIENT 1</h1>
+<button id="disconnect" name="disconnect">Disconnect</button>
+<h3>Messages</h3>
+<div id="messages"></div>
+<br />
+<script type="module">
+	import { MessagePeer } from '/core.js';
+
+	const knownMessages = [{ type: 'test-host', version: '1.0' }];
+
+	const client = new MessagePeer({
+		id: 'client-1',
+		onMessage: (m) => {
+			const messages = document.getElementById('messages');
+			messages.innerHTML += `<div class="${m.from}-${m.payload.type}">${m.from}-${m.payload.type}</div>`;
+		},
+		knownMessages,
+	});
+
+	client.connect('host', {
+		window: window.parent,
+		origin: 'http://localhost:8091',
+	});
+
+	client.send(
+		{
+			type: 'test-client1',
+			version: '1.0',
+			data: 'not same origin, allow-script',
+		},
+		{ to: ['host'] },
+	);
+
+	// disconnect com protocol
+	document.getElementById('disconnect').addEventListener('click', () => {
+		client.disconnect('host');
+	});
+</script>

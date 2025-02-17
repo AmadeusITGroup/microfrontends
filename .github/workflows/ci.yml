@@ -1,0 +1,27 @@
+name: ci
+
+on:
+  push:
+    branches:
+      - master
+      - '[0-9]+_[0-9]+_x'
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+      - run: npm ci
+      - run: npx playwright install-deps
+      - run: npx playwright install
+      - run: npm run ci

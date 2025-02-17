@@ -1,0 +1,103 @@
+<meta
+	http-equiv="Content-Security-Policy"
+	content="
+  default-src 'self';
+  script-src 'self' 'unsafe-inline';
+  frame-src 'self' http://localhost:8092;
+"
+/>
+
+<base href="/handshake/" />
+
+<h1>Host</h1>
+
+<h3>Messages</h3>
+<div id="messages"></div>
+
+<br />
+
+<iframe id="iframe-same-origin-no-sandbox" src="iframe-same-origin-no-sandbox.html"></iframe>
+<iframe
+	id="iframe-same-origin-allow-scripts"
+	sandbox="allow-scripts"
+	src="iframe-same-origin-allow-scripts.html"
+></iframe>
+<iframe
+	id="iframe-not-same-origin-no-sandbox"
+	src="http://localhost:8092/handshake/iframe-not-same-origin-no-sandbox.html"
+></iframe>
+<iframe
+	id="iframe-not-same-origin-allow-scripts"
+	sandbox="allow-scripts"
+	src="http://localhost:8092/handshake/iframe-not-same-origin-allow-scripts.html"
+></iframe>
+<iframe
+	id="iframe-not-same-origin-allow-scripts-origin"
+	sandbox="allow-scripts allow-same-origin"
+	src="http://localhost:8092/handshake/iframe-not-same-origin-allow-scripts-origin.html"
+></iframe>
+
+<script type="module">
+	import { MessagePeer } from '/core.js';
+
+	const knownMessages = [{ type: 'test', version: '1.0' }];
+
+	// 0. no iframe
+	const host = new MessagePeer({
+		id: 'host',
+		onMessage: (m) => {
+			const messages = document.getElementById('messages');
+			messages.innerHTML += `<div id="${m.from}">${m.from}</div>`;
+		},
+		knownMessages,
+	});
+	host.listen('client-0');
+	host.send(
+		{
+			type: 'test',
+			version: '1.0',
+			data: 'no iframe',
+		},
+		{ to: ['client-0'] },
+	);
+
+	const client = new MessagePeer({
+		id: 'client-0',
+		knownMessages,
+	});
+	client.connect('host');
+	client.send(
+		{
+			type: 'test',
+			version: '1.0',
+			data: 'no iframe',
+		},
+		{ to: ['host'] },
+	);
+
+	// 1. same origin, no sandbox
+	host.listen('client-1');
+
+	// 2. same origin, allow-scripts
+	host.listen('client-2', {
+		window: document.getElementById('iframe-same-origin-allow-scripts').contentWindow,
+	});
+
+	// 3. not same origin, no sandbox
+	host.listen('client-3', {
+		window: document.getElementById('iframe-not-same-origin-no-sandbox').contentWindow,
+		origin: 'http://localhost:8092',
+	});
+
+	// 4. not same origin, allow-scripts
+	host.listen('client-4', {
+		window: document.getElementById('iframe-not-same-origin-allow-scripts').contentWindow,
+		origin: 'http://localhost:8092',
+	});
+
+	// 5. not same origin, allow-scripts, allow-same-origin
+	host.listen('client-5', {
+		window: document.getElementById('iframe-not-same-origin-allow-scripts-origin').contentWindow,
+		origin: 'http://localhost:8092',
+	});
+</script>

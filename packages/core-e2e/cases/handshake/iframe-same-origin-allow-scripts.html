@@ -1,0 +1,23 @@
+<h1>Same origin, allow scripts</h1>
+
+<script type="module">
+	import { MessagePeer } from '/core.js';
+
+	const client = new MessagePeer({
+		id: 'client-2',
+	});
+
+	client.connect('host', {
+		window: window.parent,
+		origin: 'http://localhost:8091',
+	});
+
+	client.send(
+		{
+			type: 'test',
+			version: '1.0',
+			data: 'same origin, allow scripts',
+		},
+		{ to: ['host'] },
+	);
+</script>

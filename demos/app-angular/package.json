@@ -1,0 +1,37 @@
+{
+	"name": "app-angular",
+	"private": true,
+	"scripts": {
+		"build": "wireit",
+		"demo": "wireit",
+		"lint": "ng lint",
+		"serve": "ws -d dist/browser -p 8080 -z",
+		"livereload": "livereload dist/browser",
+		"watch": "npm run build --watch"
+	},
+	"type": "module",
+	"wireit": {
+		"build": {
+			"command": "ng build",
+			"dependencies": [
+				"../../packages/angular:build"
+			],
+			"files": [
+				"src/**/*.*",
+				"angular.json",
+				"tsconfig.json"
+			],
+			"output": [
+				"dist/**"
+			]
+		},
+		"demo": {
+			"command": "run-p livereload watch serve",
+			"service": true
+		}
+	},
+	"dependencies": {
+		"@amadeus-it-group/microfrontends": "file:../../packages/core",
+		"@amadeus-it-group/microfrontends-angular": "file:../../packages/angular/dist"
+	}
+}

@@ -1,0 +1,14 @@
+{
+	"name": "@amadeus-it-group/microfrontends-angular",
+	"description": "Amadeus Micro Frontend Toolkit for Angular",
+	"version": "0.0.0",
+	"peerDependencies": {
+		"@angular/core": "^19.1.0",
+		"@amadeus-it-group/microfrontends": "0.0.0",
+		"rxjs": "^7.8.0"
+	},
+	"dependencies": {
+		"tslib": "^2.3.0"
+	},
+	"sideEffects": false
+}
