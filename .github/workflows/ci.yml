@@ -3,7 +3,7 @@ name: ci
 on:
   push:
     branches:
-      - master
+      - main
       - '[0-9]+_[0-9]+_x'
   pull_request:
     types: [opened, synchronize, reopened]
