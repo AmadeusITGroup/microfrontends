@@ -20,15 +20,15 @@ This is optional, but allows for type checking during development when sending a
 import { Message } from '@amadeus-it-group/microfrontends';
 
 interface HelloMessage extends Message {
-	type: 'hello';
-	version: '1.0';
-	greeting: string;
+  type: 'hello';
+  version: '1.0';
+  greeting: string;
 }
 
 interface HelloMessageV2 extends Message {
-	type: 'hello';
-	version: '2.0';
-	greetings: string[];
+  type: 'hello';
+  version: '2.0';
+  greetings: string[];
 }
 
 export type MyMessage = HelloMessage | HelloMessageV2;
@@ -43,17 +43,20 @@ import { Message, MessagePeer } from '@amadeus-it-group/microfrontends';
 
 // Message types are optional
 const peer = new MessagePeer<MyMessage>({
-	// unique identifier for this peer in the network
-	id: 'one',
-	// callback to handle incoming messages
-	onMessage: ({ payload }: MyMessage) => {},
-	// handle service messages like `connect`, `disconnect`, etc.
-	onServiceMessage: ({ payload }: ServiceMessage) => {},
-	// list of messages this peer accepts after creation
-	knownMessages: [
-		{ type: 'hello', version: '1.0' },
-		{ type: 'hello', version: '2.0' },
-	],
+  // unique identifier for this peer in the network
+  id: 'one',
+
+  // callback to handle incoming messages
+  onMessage: ({ payload }: MyMessage) => {},
+
+  // handle service messages like `connect`, `disconnect`, etc.
+  onServiceMessage: ({ payload }: ServiceMessage) => {},
+
+  // list of messages this peer accepts after creation
+  knownMessages: [
+    { type: 'hello', version: '1.0' },
+    { type: 'hello', version: '2.0' },
+  ],
 });
 ```
 
@@ -71,10 +74,11 @@ one.listen('two');
 const two = new MessagePeer({ id: 'two' });
 two.connect('one');
 
-// if connecton crosses iFrames, you might need to provide expected window and origin for both `connect` and `listen` methods
+// if connecton crosses iFrames, you might need to provide
+// expected window and origin for both `connect` and `listen` methods
 one.listen('two', {
-	window: iframe.contentWindow,
-	origin: 'https://example.com',
+  window: iframe.contentWindow,
+  origin: 'https://example.com',
 });
 
 // Disconnecting
@@ -90,38 +94,38 @@ import { MyMessage } from 'app-angular/src/app/one/messages';
 
 // Receiving messages
 const one = new MessagePeer<MyMessage>({
-	id: 'one',
-	onMessage: ({ payload }: MyMessage) => {
-		if (payload.type === 'hello') {
-			switch (payload.version) {
-				case '1.0':
-					console.log(payload.greeting); // string
-					break;
-				case '2.0':
-					console.log(payload.greetings); // string[]
-					break;
-			}
-		}
-	},
+  id: 'one',
+  onMessage: ({ payload }: MyMessage) => {
+    if (payload.type === 'hello') {
+      switch (payload.version) {
+        case '1.0':
+          console.log(payload.greeting); // string
+          break;
+        case '2.0':
+          console.log(payload.greetings); // string[]
+          break;
+      }
+    }
+  },
 });
 
 // Broadcast a message. Message will be type checked.
 two.send({
-	type: 'hello',
-	version: '1.0',
-	greeting: 'Hello, world!',
+  type: 'hello',
+  version: '1.0',
+  greeting: 'Hello, world!',
 });
 
 // Send a message to a specific peer. Other peers will not receive it.
 two.send(
-	{
-		type: 'hello',
-		version: '2.0',
-		greetings: ['Hello', 'world!'],
-	},
-	{
-		to: 'one',
-	},
+  {
+    type: 'hello',
+    version: '2.0',
+    greetings: ['Hello', 'world!'],
+  },
+  {
+    to: 'one',
+  },
 );
 ```
 
