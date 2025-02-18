@@ -29,9 +29,5 @@
 			"command": "run-p livereload watch serve",
 			"service": true
 		}
-	},
-	"dependencies": {
-		"@amadeus-it-group/microfrontends": "file:../../packages/core",
-		"@amadeus-it-group/microfrontends-angular": "file:../../packages/angular/dist"
 	}
 }

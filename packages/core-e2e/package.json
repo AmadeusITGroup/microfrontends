@@ -41,9 +41,6 @@
 			"output": []
 		}
 	},
-	"dependencies": {
-		"@amadeus-it-group/microfrontends": "file:../../core"
-	},
 	"devDependencies": {
 		"@playwright/test": "^1.49.0",
 		"@types/node": "^22.10.1"

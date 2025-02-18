@@ -5,11 +5,11 @@
 	"main": "dist/index.js",
 	"type": "module",
 	"files": [
-		"dist",
-		"bundle"
+		"dist"
 	],
 	"scripts": {
 		"build": "wireit",
+		"build:prod": "wireit",
 		"lint": "wireit",
 		"test": "wireit",
 		"tdd": "jest --watch",
@@ -21,6 +21,12 @@
 			"dependencies": [
 				"compile",
 				"bundle"
+			]
+		},
+		"build:prod": {
+			"command": "tsc --project tsconfig.prod.json",
+			"output": [
+				"dist/**"
 			]
 		},
 		"watch": {

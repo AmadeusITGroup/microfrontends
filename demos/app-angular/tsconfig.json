@@ -16,7 +16,10 @@
 		"moduleResolution": "bundler",
 		"importHelpers": true,
 		"target": "ES2022",
-		"module": "ES2022"
+		"module": "ES2022",
+		"paths": {
+			"@amadeus-it-group/microfrontends-angular": ["../../packages/angular/dist"]
+		}
 	},
 	"angularCompilerOptions": {
 		"enableI18nLegacyMessageIdFormat": false,

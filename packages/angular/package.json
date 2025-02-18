@@ -5,11 +5,21 @@
 	"type": "module",
 	"scripts": {
 		"build": "wireit",
+		"build:prod": "wireit",
 		"test": "wireit",
 		"tdd": "jest --watch",
 		"lint": "wireit"
 	},
 	"wireit": {
+		"build:prod": {
+			"command": "ng build -c production",
+			"output": [
+				"dist/**"
+			],
+			"dependencies": [
+				"../core:build:prod"
+			]
+		},
 		"build": {
 			"command": "ng build",
 			"files": [
@@ -44,9 +54,6 @@
 			],
 			"output": []
 		}
-	},
-	"dependencies": {
-		"@amadeus-it-group/microfrontends": "file:../core"
 	},
 	"devDependencies": {
 		"ng-packagr": "^19.1.0"
