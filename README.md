@@ -1,30 +1,20 @@
 # Micro Frontends
 
-This repository contains tools for developing micro frontend applications. Please refer to the documentation for the specific packages for more information.
+This repository contains tools for developing micro frontend applications. Please refer to the documentation of the specific package for more information.
 
-## Published packages
+## Packages
 
-| NPM Package                                | Source Code        | Documentation                             |
-| ------------------------------------------ | ------------------ | ----------------------------------------- |
-| `@amadeus-it-group/microfrontends`         | `packages/core`    | [README.md](./packages/core/README.md)    |
-| `@amadeus-it-group/microfrontends-angular` | `packages/angular` | [README.md](./packages/angular/README.md) |
+| NPM Package                                                                                                          | Source Code        | Documentation                             |
+| -------------------------------------------------------------------------------------------------------------------- | ------------------ | ----------------------------------------- |
+| [`@amadeus-it-group/microfrontends`](https://www.npmjs.com/package/@amadeus-it-group/microfrontends)                 | `packages/core`    | [README.md](./packages/core/README.md)    |
+| [`@amadeus-it-group/microfrontends-angular`](https://www.npmjs.com/package/@amadeus-it-group/microfrontends-angular) | `packages/angular` | [README.md](./packages/angular/README.md) |
 
-## Getting Started
+## Reporting issues
 
-Simply run `npm install` after cloning the repository.
+Please use the `Bug Report` template and provide as much information as possible. Please fork [this StackBlitz](https://stackblitz.com/edit/amadeus-it-group-microfrontends) to reproduce the issue if possible.
 
-Useful commands:
+## Contributing
 
-- `npm run build` to build all packages
-- `npm run test` to run all tests
-- `npm run lint` to lint all packages
-- `npm run demo` to launch the demo application
+Please read [DEVELOPER.md](DEVELOPER.md) before contributing to the project.
 
-## Workspaces
-
-| Workspace           | Description                         |
-| ------------------- | ----------------------------------- |
-| `packages/core`     | The core library                    |
-| `packages/core-e2e` | E2E test cases for the core library |
-| `packages/angular`  | Angular wrappers and specific tools |
-| `demos/app-angular` | Small Angular demo application      |
+If in doubt - please open an issue to discuss the changes you would like to make.
