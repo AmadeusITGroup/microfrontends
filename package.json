@@ -25,7 +25,7 @@
 		"demo": "wireit",
 		"test": "wireit",
 		"lint": "wireit",
-		"format:check": "prettier --check .",
+		"format": "prettier --check .",
 		"ci": "wireit",
 		"postinstall": "husky"
 	},
@@ -74,7 +74,7 @@
 			"dependencies": [
 				"lint",
 				"test",
-				"format:check"
+				"format"
 			]
 		}
 	},
