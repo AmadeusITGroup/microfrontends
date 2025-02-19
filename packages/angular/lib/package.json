@@ -2,6 +2,19 @@
 	"name": "@amadeus-it-group/microfrontends-angular",
 	"description": "Amadeus Micro Frontend Toolkit for Angular",
 	"version": "0.0.1",
+	"license": "MIT",
+	"homepage": "https://github.com/AmadeusITGroup/microfrontends",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/AmadeusITGroup/microfrontends.git"
+	},
+	"keywords": [
+		"micro frontends",
+		"mfe",
+		"postmessage",
+		"message channel",
+		"angular"
+	],
 	"peerDependencies": {
 		"@angular/core": "^19.0.0",
 		"@amadeus-it-group/microfrontends": "0.0.1",

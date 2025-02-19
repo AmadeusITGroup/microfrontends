@@ -2,6 +2,7 @@
 	"name": "@amadeus-it-group/microfrontends-angular",
 	"private": true,
 	"description": "Amadeus Micro Frontend Toolkit for Angular",
+	"license": "MIT",
 	"type": "module",
 	"scripts": {
 		"build": "wireit",
