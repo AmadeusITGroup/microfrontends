@@ -1,14 +1,8 @@
 # Amadeus Toolkit for Micro Frontends
 
-> TODO: description
+## Messaging
 
-# Messaging
-
-The Amadeus Toolkit for Micro Frontends provides a messaging system that allows micro frontends to communicate with each other. The messaging system is based on the [Channel Messaging API](https://developer.mozilla.org/en-US/docs/Web/API/Channel_Messaging_API) and works across iFrames.
-
-## Concepts
-
-// TODO
+The Amadeus Toolkit for Micro Frontends provides a messaging system that allows micro frontends to communicate with each other. The messaging system is based on the [Channel Messaging API](https://developer.mozilla.org/en-US/docs/Web/API/Channel_Messaging_API) and works across iFrames. It can also be used in the same document for talk to MFE packaged as a Web Component for example.
 
 ## Common use-cases
 
