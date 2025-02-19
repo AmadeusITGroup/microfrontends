@@ -1,3 +1,3 @@
 # Amadeus Toolkit for Micro Frontends (Angular)
 
-> TODO: description
+An Angular wrapper for the `@amadeus-it-group/microfrontends` library.
