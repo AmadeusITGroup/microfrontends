@@ -4,6 +4,16 @@
 
 The Amadeus Toolkit for Micro Frontends provides a messaging system that allows micro frontends to communicate with each other. The messaging system is based on the [Channel Messaging API](https://developer.mozilla.org/en-US/docs/Web/API/Channel_Messaging_API) and works across iFrames. It can also be used in the same document for talk to MFE packaged as a Web Component for example.
 
+## Features
+
+![img.png](docs/schema.svg)
+
+- typed and versioned messages exchange between message peers
+- broadcasting messages across all connected micro frontends (ex. `MF1` to everybody)
+- sending messages between two specific micro frontends (ex. `MF4` to `MF3`)
+- lifecycle messages (ex. `MF5` disconnected, `MF3` connected)
+- message validation before sending and upon reception
+
 ## Common use-cases
 
 ### Declaring Message types
