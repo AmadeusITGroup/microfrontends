@@ -8,7 +8,7 @@ The Amadeus Toolkit for Micro Frontends provides a messaging system that allows 
 
 ![schema.svg](https://raw.githubusercontent.com/AmadeusITGroup/microfrontends/refs/heads/main/packages/core/docs/schema.svg)
 
-- typed and versioned messages exchange between message peers
+- typed and versioned message exchange between `MessagePeers`
 - broadcasting messages across all connected micro frontends (ex. `MF1` to everybody)
 - sending messages between two specific micro frontends (ex. `MF4` to `MF3`)
 - lifecycle messages (ex. `MF5` disconnected, `MF3` connected)
@@ -94,7 +94,6 @@ one.disconnect(); // disconnect from all peers
 
 ```ts
 import { MessagePeer } from '@amadeus-it-group/microfrontends';
-import { MyMessage } from 'app-angular/src/app/one/messages';
 
 // Receiving messages
 const one = new MessagePeer<MyMessage>({
