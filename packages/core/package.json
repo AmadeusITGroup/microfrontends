@@ -1,7 +1,7 @@
 {
 	"name": "@amadeus-it-group/microfrontends",
 	"description": "Amadeus Micro Frontend Toolkit",
-	"version": "0.0.1",
+	"version": "0.0.2",
 	"license": "MIT",
 	"homepage": "https://github.com/AmadeusITGroup/microfrontends",
 	"repository": {
@@ -18,7 +18,8 @@
 	"main": "dist/index.js",
 	"type": "module",
 	"files": [
-		"dist"
+		"dist",
+		"docs"
 	],
 	"scripts": {
 		"build": "wireit",

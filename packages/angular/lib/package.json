@@ -1,7 +1,7 @@
 {
 	"name": "@amadeus-it-group/microfrontends-angular",
 	"description": "Amadeus Micro Frontend Toolkit for Angular",
-	"version": "0.0.1",
+	"version": "0.0.2",
 	"license": "MIT",
 	"homepage": "https://github.com/AmadeusITGroup/microfrontends",
 	"repository": {
@@ -17,7 +17,7 @@
 	],
 	"peerDependencies": {
 		"@angular/core": "^19.0.0",
-		"@amadeus-it-group/microfrontends": "0.0.1",
+		"@amadeus-it-group/microfrontends": "0.0.2",
 		"rxjs": "^7.8.0"
 	},
 	"dependencies": {
