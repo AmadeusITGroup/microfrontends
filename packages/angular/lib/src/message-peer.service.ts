@@ -4,6 +4,7 @@ import type {
 	PeerConnectionOptions,
 	PeerSendOptions,
 	RoutedMessage,
+	ServiceMessage,
 } from '@amadeus-it-group/microfrontends';
 import { MessagePeer } from '@amadeus-it-group/microfrontends';
 import { Observable, Subject } from 'rxjs';
@@ -17,6 +18,10 @@ export interface MessagePeerServiceType<M extends Message> extends MessagePeerTy
 	 * Observable for incoming messages
 	 */
 	get messages$(): Observable<RoutedMessage<M>>;
+	/**
+	 * Observable for incoming service messages
+	 */
+	get serviceMessages$(): Observable<RoutedMessage<ServiceMessage>>;
 }
 
 /**
@@ -60,6 +65,7 @@ export const MESSAGE_PEER_LISTEN_OPTIONS = new InjectionToken<PeerConnectionOpti
 export class MessagePeerService<M extends Message> implements MessagePeerServiceType<M> {
 	readonly #peer: MessagePeerType<M>;
 	readonly #messages$ = new Subject<RoutedMessage<M>>();
+	readonly #serviceMessages$ = new Subject<RoutedMessage<ServiceMessage>>();
 
 	readonly #diConnectOptions = inject(MESSAGE_PEER_CONNECT_OPTIONS, { optional: true });
 	readonly #diListenOptions = inject(MESSAGE_PEER_LISTEN_OPTIONS, { optional: true });
@@ -69,6 +75,7 @@ export class MessagePeerService<M extends Message> implements MessagePeerService
 		this.#peer = new MessagePeer<M>({
 			id: config.id,
 			onMessage: (message) => this.#messages$.next(message),
+			onServiceMessage: (message) => this.#serviceMessages$.next(message),
 			knownMessages: config.knownMessages,
 		});
 	}
@@ -112,6 +119,13 @@ export class MessagePeerService<M extends Message> implements MessagePeerService
 	 */
 	public get messages$(): Observable<RoutedMessage<M>> {
 		return this.#messages$.asObservable();
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public get serviceMessages$(): Observable<RoutedMessage<ServiceMessage>> {
+		return this.#serviceMessages$.asObservable();
 	}
 
 	/**

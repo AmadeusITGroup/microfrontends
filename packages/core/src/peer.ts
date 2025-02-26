@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Endpoint, EndpointType } from './endpoint';
 import { ErrorMessage, isServiceMessage, Message, RoutedMessage, ServiceMessage } from './message';
 import { MessageError } from './message-error';
@@ -54,10 +55,15 @@ export interface PeerOptions<M extends Message> {
 	knownMessages?: Message[];
 	/**
 	 * Callback that is called when a new message is received by the peer.
-	 * It can be a {@link ServiceMessage} like `connect` or `disconnect` or a custom user message.
+	 * To handle {@link ServiceMessage} like `connect` or `disconnect`, use the {@link PeerOptions#onServiceMessage} callback.
 	 * @param message - received message
 	 */
 	onMessage?: (message: RoutedMessage<M>) => void;
+	/**
+	 * Callback that is called when a new {@link ServiceMessage} is received by the peer
+	 * @param message - received service message
+	 */
+	onServiceMessage?: (message: RoutedMessage<ServiceMessage>) => void;
 	/**
 	 * Callback that is called when an error occurs during received message processing locally.
 	 * The {@link ErrorMessage} will be sent back to the sender of the message automatically.
@@ -155,8 +161,9 @@ export class MessagePeer<M extends Message> implements MessagePeerType<M> {
 	readonly #endpoints = new Map<string, EndpointType<M>>();
 	readonly #endpointPeers = new Map<string, Set<string>>();
 
-	readonly #onMessage: PeerOptions<M>['onMessage'] | null = null;
-	readonly #onError: PeerOptions<M>['onError'] | null = null;
+	readonly #onMessage: PeerOptions<M>['onMessage'];
+	readonly #onServiceMessage: PeerOptions<M>['onServiceMessage'];
+	readonly #onError: PeerOptions<M>['onError'];
 
 	readonly #messageChecks: MessageCheck<M>[] = [...PEER_MESSAGE_CHECKS];
 	readonly #knownPeers = new Map<string, Message[]>();
@@ -164,6 +171,7 @@ export class MessagePeer<M extends Message> implements MessagePeerType<M> {
 	constructor(options: PeerOptions<M>) {
 		this.#id = options.id;
 		this.#onMessage = options?.onMessage;
+		this.#onServiceMessage = options?.onServiceMessage;
 		this.#onError = options?.onError || ((error) => console.error(error, error.messageObject));
 
 		this.#knownPeers.set(this.id, []);
@@ -410,7 +418,10 @@ export class MessagePeer<M extends Message> implements MessagePeerType<M> {
 						}
 
 						// 3. passing the message to the user
-						this.#onMessage?.({ ...message, payload: { ...payload, knownPeers: [] } });
+						this.#onServiceMessage?.({
+							...message,
+							payload: { ...payload, knownPeers: [] },
+						} as any);
 					}
 					this.#forwardMessage(endpoint, message);
 					break;
@@ -439,7 +450,7 @@ export class MessagePeer<M extends Message> implements MessagePeerType<M> {
 					}
 
 					// 3. passing the message to the user and further on the network
-					this.#onMessage?.(message);
+					this.#onServiceMessage?.(message as any);
 					this.#forwardMessage(endpoint, message);
 					break;
 				}
@@ -447,7 +458,7 @@ export class MessagePeer<M extends Message> implements MessagePeerType<M> {
 				case 'declare_messages': {
 					logger(`PEER(${this.id}): declare_messages from '${message.from}'`, payload);
 					this.#registerRemoteMessages(message.from, payload.messages);
-					this.#onMessage?.(message);
+					this.#onServiceMessage?.(message as any);
 					this.#forwardMessage(endpoint, message);
 					break;
 				}
