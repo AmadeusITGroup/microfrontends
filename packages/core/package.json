@@ -95,7 +95,6 @@
 		}
 	},
 	"devDependencies": {
-		"core-js": "^3.40.0",
 		"esbuild": "^0.25.0"
 	}
 }

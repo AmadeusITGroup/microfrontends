@@ -41,25 +41,27 @@
 		{ type: 'test-client1', version: '1.0' },
 	];
 
+	function onMessage(m) {
+		if (m.payload?.type === 'disconnect') {
+			const disconnectM = document.getElementById('disconnected');
+			disconnectM.innerHTML += `<div class="${m.from}-${m.payload.type}">client disconnected: ${m.from}-${m.payload.type}</div>`;
+			const clientId = m.from === 'client-0' ? 'client-1' : 'client-0';
+			// when a client is disconnected create the other one
+			createClient(clientId, 'http://localhost:8092');
+		} else if (m.payload?.type === 'connect') {
+			const connectMessages = document.getElementById('connect');
+			connectMessages.innerHTML += `<div class="${m.from}-${m.payload.type}">${m.from}-${m.payload.type}</div>`;
+		} else {
+			const messages = document.getElementById('messages');
+			messages.innerHTML += `<div class="${m.from}-${m.payload.type}">${m.from}-${m.payload.type}</div>`;
+		}
+	}
+
 	// create host peer
 	const host = new MessagePeer({
 		id: 'host',
-		onMessage: (m) => {
-			console.log('ON MESSAGE', m);
-			if (m.payload?.type === 'disconnect') {
-				const disconnectM = document.getElementById('disconnected');
-				disconnectM.innerHTML += `<div class="${m.from}-${m.payload.type}">client disconnected: ${m.from}-${m.payload.type}</div>`;
-				const clientId = m.from === 'client-0' ? 'client-1' : 'client-0';
-				// when a client is disconnected create the other one
-				createClient(clientId, 'http://localhost:8092');
-			} else if (m.payload?.type === 'connect') {
-				const connectMessages = document.getElementById('connect');
-				connectMessages.innerHTML += `<div class="${m.from}-${m.payload.type}">${m.from}-${m.payload.type}</div>`;
-			} else {
-				const messages = document.getElementById('messages');
-				messages.innerHTML += `<div class="${m.from}-${m.payload.type}">${m.from}-${m.payload.type}</div>`;
-			}
-		},
+		onMessage,
+		onServiceMessage: onMessage,
 		knownMessages,
 	});
 

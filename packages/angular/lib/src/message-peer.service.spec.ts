@@ -1,4 +1,4 @@
-import { TestBed } from '@angular/core/testing';
+import { Injector } from '@angular/core';
 import {
 	MESSAGE_PEER_CONFIG,
 	MESSAGE_PEER_CONNECT_OPTIONS,
@@ -12,19 +12,16 @@ import { MessagePeer } from '@amadeus-it-group/microfrontends';
 
 describe('MessagePeerService', () => {
 	let service: MessagePeerServiceType<Message>;
-	let config: MessagePeerConfig;
+	const config: MessagePeerConfig = { id: 'test-peer' };
 
 	beforeEach(() => {
-		config = {
-			id: 'test-peer',
-			knownMessages: [],
-		};
-
-		TestBed.configureTestingModule({
+		service = Injector.create({
 			providers: [MessagePeerService, { provide: MESSAGE_PEER_CONFIG, useValue: config }],
-		});
+		}).get(MessagePeerService);
+	});
 
-		service = TestBed.inject(MessagePeerService);
+	afterEach(() => {
+		jest.restoreAllMocks();
 	});
 
 	it('should be created', () => {
@@ -70,9 +67,57 @@ describe('MessagePeerService', () => {
 	});
 });
 
+describe('MessagePeerService Interactions', () => {
+	const knownMessages: Message[] = [{ type: 'test', version: '1.0' }];
+
+	let s1: MessagePeerServiceType<any>;
+	let s2: MessagePeerServiceType<any>;
+
+	beforeEach(() => {
+		s1 = Injector.create({
+			providers: [
+				MessagePeerService,
+				{ provide: MESSAGE_PEER_CONFIG, useValue: { id: 's1', knownMessages } },
+			],
+		}).get(MessagePeerService);
+
+		s2 = Injector.create({
+			providers: [
+				MessagePeerService,
+				{ provide: MESSAGE_PEER_CONFIG, useValue: { id: 's2', knownMessages } },
+			],
+		}).get(MessagePeerService);
+	});
+
+	afterEach(() => {
+		jest.restoreAllMocks();
+	});
+
+	test('should connect and exchange messages', () => {
+		const messages: any[] = [];
+		const serviceMessages: any[] = [];
+		s2.messages$.subscribe(({ payload }) =>
+			messages.push({ type: payload.type, version: payload.version }),
+		);
+		s2.serviceMessages$.subscribe(({ payload }) =>
+			serviceMessages.push({ type: payload.type, version: payload.version }),
+		);
+
+		s1.listen('s2');
+		s2.connect('s1');
+
+		s1.send({ type: 'test', version: '1.0' });
+
+		expect(messages).toEqual([{ type: 'test', version: '1.0' }]);
+		expect(serviceMessages).toEqual([{ type: 'connect', version: '1.0' }]);
+	});
+});
+
 describe('MessagePeerService DI overrides', () => {
 	let connectSpy: jest.SpyInstance;
 	let listenSpy: jest.SpyInstance;
+	let injector: Injector;
+	const knownMessages = [{ type: 'test', version: '1.0' }];
 
 	const connectOptions: PeerConnectionOptions = {
 		window: 'mocked connect window' as any,
@@ -88,16 +133,10 @@ describe('MessagePeerService DI overrides', () => {
 		connectSpy = jest.spyOn(MessagePeer.prototype, 'connect').mockImplementation();
 		listenSpy = jest.spyOn(MessagePeer.prototype, 'listen').mockImplementation();
 
-		TestBed.configureTestingModule({
+		injector = Injector.create({
 			providers: [
 				MessagePeerService,
-				{
-					provide: MESSAGE_PEER_CONFIG,
-					useValue: {
-						id: 'blah',
-						knownMessages: [{ type: 'test', version: '1.0' }],
-					},
-				},
+				{ provide: MESSAGE_PEER_CONFIG, useValue: { id: 'blah', knownMessages } },
 				{ provide: MESSAGE_PEER_CONNECT_OPTIONS, useValue: connectOptions },
 				{ provide: MESSAGE_PEER_LISTEN_OPTIONS, useValue: listenOptions },
 			],
@@ -105,12 +144,11 @@ describe('MessagePeerService DI overrides', () => {
 	});
 
 	afterEach(() => {
-		connectSpy.mockRestore();
-		listenSpy.mockRestore();
+		jest.restoreAllMocks();
 	});
 
 	test('should use the provided DI options', () => {
-		const service = TestBed.inject(MessagePeerService);
+		const service = injector.get(MessagePeerService);
 
 		// create options
 		expect(service.id).toBe('blah');

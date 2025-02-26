@@ -1,7 +1,7 @@
 import type { MessagePeerType } from './peer';
 import { MessagePeer } from './peer';
 import { MessageError } from './message-error';
-import type { Message } from './message';
+import type { Message, RoutedMessage, ServiceMessage } from './message';
 
 /**
  * Mocking window event listeners to establish connection via custom events
@@ -51,6 +51,7 @@ describe('Peer', () => {
 			id,
 			knownMessages: messages,
 			onMessage: (message: any) => onMessage({ [id]: message }),
+			onServiceMessage: (message: any) => onMessage({ [id]: message }),
 			onError: (error: any) => onError({ [id]: error }),
 		});
 	}
@@ -905,5 +906,47 @@ describe('Peer', () => {
 			},
 		]);
 		expectErrors(onError, []);
+	});
+
+	test(`should separate user messages and service messages`, () => {
+		const onMessage = jest.fn();
+		const onServiceMessage = jest.fn();
+
+		const one = new MessagePeer<Message | ServiceMessage>({ id: 'one', knownMessages });
+		const two = new MessagePeer<Message | ServiceMessage>({
+			id: 'two',
+			knownMessages,
+			onMessage: ({ payload }: RoutedMessage<Message>) =>
+				onMessage({ type: payload.type, version: payload.version }),
+			onServiceMessage: ({ payload }: RoutedMessage<ServiceMessage>) =>
+				onServiceMessage({ type: payload.type, version: payload.version }),
+		});
+
+		// initial connect
+		one.listen('two');
+		two.connect('one');
+
+		expect(onMessage.mock.calls.length).toBe(0);
+		expect(onServiceMessage.mock.calls.length).toBe(1); // initial connect message
+
+		// normal message
+		one.send({ type: 'known', version: '1.0' });
+
+		// declare messages
+		one.send({
+			type: 'declare_messages',
+			version: '1.0',
+			messages: [],
+		});
+
+		// disconnect message
+		one.disconnect('two');
+
+		expect(onMessage.mock.calls).toEqual([[{ type: 'known', version: '1.0' }]]);
+		expect(onServiceMessage.mock.calls).toEqual([
+			[{ type: 'connect', version: '1.0' }],
+			[{ type: 'declare_messages', version: '1.0' }],
+			[{ type: 'disconnect', version: '1.0' }],
+		]);
 	});
 });
