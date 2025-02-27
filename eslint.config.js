@@ -17,6 +17,12 @@ export default tsEslint.config(
 		],
 	},
 	{
+		files: ['**/*.ts'],
+		rules: {
+			'@typescript-eslint/no-unused-expressions': 'off',
+		},
+	},
+	{
 		files: ['**/*.spec.ts'],
 		rules: {
 			'@typescript-eslint/no-explicit-any': 'off',

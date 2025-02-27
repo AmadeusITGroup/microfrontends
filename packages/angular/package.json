@@ -45,7 +45,7 @@
 				"coverage/**"
 			],
 			"dependencies": [
-				"lint"
+				"build"
 			]
 		},
 		"lint": {
