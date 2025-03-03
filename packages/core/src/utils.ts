@@ -1,14 +1,22 @@
 import { Message, RoutedMessage } from './message';
 import { MessageError } from './message-error';
 
-const DEBUG = true;
+let LOGGING_ENABLED = false;
+
+/**
+ * If true, tracing information to help debugging will be logged in the console
+ * @param enabled
+ */
+export function enableLogging(enabled: boolean) {
+	LOGGING_ENABLED = enabled;
+}
 
 /**
  * Logs things
  * @param args - whatever
  */
 export function logger(...args: unknown[]) {
-	if (DEBUG) {
+	if (LOGGING_ENABLED) {
 		console.log(...args);
 	}
 }
