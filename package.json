@@ -39,7 +39,8 @@
 		"build:packages": {
 			"dependencies": [
 				"./packages/core:build:prod",
-				"./packages/angular:build:prod"
+				"./packages/angular:build:prod",
+				"./demos/app-angular:build:prod"
 			]
 		},
 		"build": {

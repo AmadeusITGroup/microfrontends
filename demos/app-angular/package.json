@@ -12,7 +12,7 @@
 	"type": "module",
 	"wireit": {
 		"build": {
-			"command": "ng build",
+			"command": "ng build -c development",
 			"dependencies": [
 				"../../packages/angular:build"
 			],
@@ -20,6 +20,15 @@
 				"src/**/*.*",
 				"angular.json",
 				"tsconfig.json"
+			],
+			"output": [
+				"dist/**"
+			]
+		},
+		"build:prod": {
+			"command": "ng build",
+			"dependencies": [
+				"../../packages/angular:build:prod"
 			],
 			"output": [
 				"dist/**"
