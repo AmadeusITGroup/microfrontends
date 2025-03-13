@@ -87,51 +87,61 @@ export class Endpoint<M extends Message> implements EndpointType<M> {
 
 					const { origin, ports, source } = event;
 					const message = event.data;
-					const { payload } = message;
 
 					// only accept messages of:
+					// - correct structure
 					// - type 'handshake' with matching 'id' and 'remoteId'
 					// - expected origin
 					// - 'null' origin with expected source
-					if (
-						payload.type === `handshake` &&
-						payload.endpointId === this.id &&
-						payload.remoteId === endpointId &&
-						(origin === hostOrigin || (origin === 'null' && source === hostWindow))
-					) {
-						// if the other party has died and reconnecting
-						// we need to disconnect first
-						this.#port?.close();
+					try {
+						checkMessageHasCorrectStructure(message);
 
-						this.#port = ports[0];
-						this.#remoteId = payload.remoteId;
+						const { payload } = message;
+						if (
+							payload.type === `handshake` &&
+							payload.endpointId === this.id &&
+							payload.remoteId === endpointId &&
+							(origin === hostOrigin || (origin === 'null' && source === hostWindow))
+						) {
+							// if the other party has died and reconnecting
+							// we need to disconnect first
+							this.#port?.close();
 
-						this.#port.onmessage = (event: MessageEvent<RoutedMessage<M>>) => {
-							const message = event.data;
-							logger(`EP(${this.id}): message received from '${this.#remoteId ?? '?'}':`, message);
-							this.#processMessage(message);
-						};
+							this.#port = ports[0];
+							this.#remoteId = payload.remoteId;
 
-						const handshake: RoutedMessage<HandshakeMessage> = {
-							from: this.id,
-							to: [endpointId],
-							payload: {
-								type: 'handshake',
-								version: '1.0',
-								endpointId,
-								remoteId: this.id,
-								knownPeers: new Map(options.knownPeers),
-							},
-						};
-						logger(
-							`EP(${this.id}): handshake received from '${endpointId}', sending handshake back`,
-							handshake,
-						);
-						this.#onMessage?.(message);
-						this.#port.postMessage(handshake);
-						this.#connected = true;
-						this.#sendQueuedMessages();
-						resolve(() => this.disconnect());
+							this.#port.onmessage = (event: MessageEvent<RoutedMessage<M>>) => {
+								const message = event.data;
+								logger(
+									`EP(${this.id}): message received from '${this.#remoteId ?? '?'}':`,
+									message,
+								);
+								this.#processMessage(message);
+							};
+
+							const handshake: RoutedMessage<HandshakeMessage> = {
+								from: this.id,
+								to: [endpointId],
+								payload: {
+									type: 'handshake',
+									version: '1.0',
+									endpointId,
+									remoteId: this.id,
+									knownPeers: new Map(options.knownPeers),
+								},
+							};
+							logger(
+								`EP(${this.id}): handshake received from '${endpointId}', sending handshake back`,
+								handshake,
+							);
+							this.#onMessage?.(message);
+							this.#port.postMessage(handshake);
+							this.#connected = true;
+							this.#sendQueuedMessages();
+							resolve(() => this.disconnect());
+						}
+					} catch {
+						// ignore invalid handshake message attempts
 					}
 				};
 				window.addEventListener('message', this.#handshakeListener);

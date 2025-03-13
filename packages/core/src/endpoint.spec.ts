@@ -4,6 +4,10 @@ import type { HandshakeMessage, RoutedMessage } from './message';
 const createEndpoint = (id: string): EndpointType<any> => new Endpoint(id);
 
 describe('Endpoint', () => {
+	afterEach(() => {
+		jest.restoreAllMocks();
+	});
+
 	test(`should be created with correct state`, () => {
 		const endpoint = createEndpoint('one');
 		expect(endpoint.id).toBe('one');
@@ -73,7 +77,44 @@ describe('Endpoint', () => {
 
 		expect(origin).toBe('https://test.com');
 	});
-	//
+
+	test(`listen() should ignore non-handshake messages`, () => {
+		const endpoint = createEndpoint('one');
+
+		// spying on window handshake listener
+		let listener: any;
+		jest
+			.spyOn(window, 'addEventListener')
+			.mockImplementation((type: string, handshakeListener: any) => (listener = handshakeListener));
+
+		// listening for handshakes
+		endpoint.listen('two', {
+			knownPeers: new Map(),
+			onMessage: jest.fn(),
+			onError: jest.fn(),
+		});
+
+		expect(() => {
+			listener({
+				origin: 'https://test.com',
+				ports: [],
+				source: '?',
+				data: {}, // empty message, should be ignored
+			});
+
+			listener({
+				origin: 'https://test.com',
+				ports: [],
+				source: '?',
+				data: {
+					payload: {
+						data: 'test',
+					}, // non RoutedMessage, should be ignored
+				},
+			});
+		}).not.toThrow();
+	});
+
 	test(`listen() should handle handshake and send it back`, () => {
 		const endpoint = createEndpoint('one');
 
@@ -107,6 +148,8 @@ describe('Endpoint', () => {
 			],
 			source: 'b',
 			data: {
+				from: 'two',
+				to: ['one'],
 				payload: {
 					type: 'handshake',
 					version: '1.0',
