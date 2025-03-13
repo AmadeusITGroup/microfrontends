@@ -119,17 +119,7 @@ export class Endpoint<M extends Message> implements EndpointType<M> {
 								this.#processMessage(message);
 							};
 
-							const handshake: RoutedMessage<HandshakeMessage> = {
-								from: this.id,
-								to: [endpointId],
-								payload: {
-									type: 'handshake',
-									version: '1.0',
-									endpointId,
-									remoteId: this.id,
-									knownPeers: new Map(options.knownPeers),
-								},
-							};
+							const handshake = this.#createHandshakeMessage(endpointId, options.knownPeers);
 							logger(
 								`EP(${this.id}): handshake received from '${endpointId}', sending handshake back`,
 								handshake,
@@ -195,17 +185,7 @@ export class Endpoint<M extends Message> implements EndpointType<M> {
 				};
 
 				// Send handshake message to the host window
-				const handshake: RoutedMessage<HandshakeMessage> = {
-					from: this.id,
-					to: [endpointId],
-					payload: {
-						type: 'handshake',
-						version: '1.0',
-						endpointId,
-						remoteId: this.id,
-						knownPeers: options.knownPeers,
-					},
-				};
+				const handshake = this.#createHandshakeMessage(endpointId, options.knownPeers);
 
 				// Same window -> CustomEvent
 				if (window === hostWindow) {
@@ -273,6 +253,23 @@ export class Endpoint<M extends Message> implements EndpointType<M> {
 		this.#onError = options?.onError || ((error) => console.warn(error));
 
 		return { hostOrigin, hostWindow };
+	}
+
+	#createHandshakeMessage(
+		endpointId: string,
+		knownPeers: Map<string, Message[]>,
+	): RoutedMessage<HandshakeMessage> {
+		return {
+			from: this.id,
+			to: [endpointId],
+			payload: {
+				type: 'handshake',
+				version: '1.0',
+				endpointId,
+				remoteId: this.id,
+				knownPeers: new Map(knownPeers),
+			},
+		};
 	}
 
 	#processMessage(message: RoutedMessage<M>) {
