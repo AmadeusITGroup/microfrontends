@@ -149,6 +149,38 @@ describe('Peer', () => {
 					payload: { type: 'connect', version: '1.0', knownPeers: [], connected: ['one'] },
 				},
 			},
+			{
+				one: {
+					from: 'two',
+					to: ['one'],
+					payload: {
+						type: 'error',
+						version: '1.0',
+						error: `Unknown message type "unknown". Known types: ["known"]`,
+						message: {
+							from: 'one',
+							to: [],
+							payload: { type: 'unknown', version: '1.0' },
+						},
+					},
+				},
+			},
+			{
+				two: {
+					from: 'one',
+					to: ['two'],
+					payload: {
+						type: 'error',
+						version: '1.0',
+						error: `Unknown message version "2.0". Known versions: ["1.0"]`,
+						message: {
+							from: 'two',
+							to: [],
+							payload: { type: 'known', version: '2.0' },
+						},
+					},
+				},
+			},
 		]);
 
 		expectErrors(onError, [
@@ -439,6 +471,22 @@ describe('Peer', () => {
 			},
 			{ three: { from: 'one', to: ['three'], payload: { type: 'three-only', version: '1.0' } } },
 			{ three: { from: 'one', to: ['three'], payload: { type: 'three-only', version: '1.0' } } },
+			{
+				one: {
+					from: 'two',
+					to: ['one'],
+					payload: {
+						type: 'error',
+						version: '1.0',
+						error: `Unknown message type "three-only". Known types: ["known"]`,
+						message: {
+							from: 'one',
+							to: [],
+							payload: { type: 'three-only', version: '1.0' },
+						},
+					},
+				},
+			},
 			{ three: { from: 'one', to: [], payload: { type: 'three-only', version: '1.0' } } },
 		]);
 		expectErrors(onError, [

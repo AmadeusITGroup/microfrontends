@@ -331,18 +331,17 @@ export class MessagePeer<M extends Message> implements MessagePeerType<M> {
 	#handleEndpointError(endpoint: EndpointType<M | ErrorMessage>, error: MessageError) {
 		this.#onError?.(error);
 
-		// TODO: implement error handling
 		// sending back to the endpoint we got it from
-		// endpoint.send({
-		//   from: this.id,
-		//   to: [error.messageObject.from || endpoint.remoteId || '?'],
-		//   payload: {
-		//     type: 'error',
-		//     version: '1.0',
-		//     error: error.message,
-		//     message: error.messageObject
-		//   }
-		// });
+		endpoint.send({
+			from: this.id,
+			to: [error.messageObject.from],
+			payload: {
+				type: 'error',
+				version: '1.0',
+				error: error.message,
+				message: error.messageObject,
+			},
+		});
 	}
 
 	/**
@@ -463,11 +462,21 @@ export class MessagePeer<M extends Message> implements MessagePeerType<M> {
 					break;
 				}
 
+				case 'error': {
+					logger(`PEER(${this.id}): 'error' message from '${message.from}'`, payload);
+					if (message.to.includes(this.id)) {
+						this.#onServiceMessage?.(message as any);
+					} else {
+						this.#forwardMessage(endpoint, message);
+					}
+					break;
+				}
+
 				default: {
-					logger(`PEER(${this.id}):`, `unknown message type: ${payload.type}`);
+					logger(`PEER(${this.id}):`, `unknown message type: ${payload['type']}`);
 					this.#handleEndpointError(
 						endpoint,
-						new MessageError(message, `unknown message type: ${payload.type}`),
+						new MessageError(message, `unknown message type: ${payload['type']}`),
 					);
 				}
 			}
