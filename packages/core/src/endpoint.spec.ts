@@ -175,4 +175,60 @@ describe('Endpoint', () => {
 			},
 		} satisfies RoutedMessage<HandshakeMessage>);
 	});
+
+	test(`send() should queue messages before connection is established`, () => {
+		const one = createEndpoint('one');
+
+		// spying on window handshake listener
+		let listener: any;
+		jest
+			.spyOn(window, 'addEventListener')
+			.mockImplementation((type: string, handshakeListener: any) => (listener = handshakeListener));
+
+		// sending messages before connection is established
+		one.send({ from: 'one', to: [], payload: { type: 'test', version: '1.0' } });
+		one.send({ from: 'one', to: [], payload: { type: 'test', version: '2.0' } });
+		one.send({ from: 'one', to: [], payload: { type: 'connect', version: '1.0' } });
+
+		const messages: any[] = [];
+		jest
+			.spyOn(one, 'send')
+			.mockImplementation(({ payload }: RoutedMessage<any>) => messages.push(payload));
+
+		// listening for 'two'
+		one.listen('two', {
+			knownPeers: new Map(),
+			onMessage: jest.fn(),
+			onError: jest.fn(),
+		});
+
+		// simulating handshake from 'two' to 'one'
+		listener({
+			origin: 'https://test.com',
+			ports: [
+				{
+					onmessage: jest.fn(),
+					postMessage: jest.fn(),
+				},
+			],
+			source: '?',
+			data: {
+				from: 'two',
+				to: ['one'],
+				payload: {
+					endpointId: 'one',
+					remoteId: 'two',
+					type: 'handshake',
+					version: '1.0',
+				},
+			},
+		});
+
+		// 'connect' should be the first in the queue
+		expect(messages).toEqual([
+			{ type: 'connect', version: '1.0' },
+			{ type: 'test', version: '1.0' },
+			{ type: 'test', version: '2.0' },
+		]);
+	});
 });
