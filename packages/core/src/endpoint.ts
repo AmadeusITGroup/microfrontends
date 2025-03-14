@@ -239,7 +239,12 @@ export class Endpoint<M extends Message> implements EndpointType<M> {
 		} else {
 			logger(`EP(${this.id}): queueing message:`, message);
 			// making sure we have a cloned message in case message contains references
-			this.#messageQueue.push(structuredClone(message));
+			// and pushing connect message before in the queue
+			if (message.payload.type === 'connect') {
+				this.#messageQueue.unshift(structuredClone(message));
+			} else {
+				this.#messageQueue.push(structuredClone(message));
+			}
 		}
 	}
 
