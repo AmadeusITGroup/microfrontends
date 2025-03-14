@@ -108,7 +108,12 @@ export interface MessagePeerType<M extends Message> {
 	 * Message must be a serializable object supported by `structuredClone()` algorithm.
 	 * Message send can happen synchronously or asynchronously depending on how the peer is connected.
 	 * By default, the message is broadcast to all connected peers.
+	 *
 	 * If you need to send a message to a specific peer only, use {@link PeerSendOptions#to} option.
+	 *
+	 * If there are no connected peers, the message will be queued until
+	 * the first connection is established.
+	 *
 	 * @param message - message to send
 	 * @param options - additional {@link PeerSendOptions} for the message delivery
 	 */
@@ -167,6 +172,8 @@ export class MessagePeer<M extends Message> implements MessagePeerType<M> {
 
 	readonly #messageChecks: MessageCheck<M>[] = [...PEER_MESSAGE_CHECKS];
 	readonly #knownPeers = new Map<string, Message[]>();
+
+	readonly #messageQueue: RoutedMessage<M | ServiceMessage>[] = [];
 
 	constructor(options: PeerOptions<M>) {
 		this.#id = options.id;
@@ -416,6 +423,9 @@ export class MessagePeer<M extends Message> implements MessagePeerType<M> {
 							knownPeers.add(id);
 						}
 
+						// as soon as we're connected properly, we dump the message queue
+						this.#sendQueuedMessages();
+
 						// 3. passing the message to the user
 						this.#onServiceMessage?.({
 							...message,
@@ -507,13 +517,19 @@ export class MessagePeer<M extends Message> implements MessagePeerType<M> {
 	 * @param options - additional {@link PeerSendOptions} for the message delivery
 	 */
 	#send(payload: M | ServiceMessage, options?: PeerSendOptions) {
-		const routedMessage: RoutedMessage<M | ServiceMessage> = {
+		const message: RoutedMessage<M | ServiceMessage> = {
 			from: this.id,
 			to: options?.to ? (Array.isArray(options.to) ? options.to : [options.to]) : [],
 			payload,
 		};
-		for (const endpoint of this.#endpoints.values()) {
-			endpoint.send(routedMessage);
+
+		// we have established connection to at least one peer
+		if (this.#knownPeers.size > 1) {
+			for (const endpoint of this.#endpoints.values()) {
+				endpoint.send(message);
+			}
+		} else {
+			this.#messageQueue.push(message);
 		}
 	}
 
@@ -555,5 +571,14 @@ export class MessagePeer<M extends Message> implements MessagePeerType<M> {
 				}
 			}
 		}
+	}
+
+	#sendQueuedMessages() {
+		for (const message of this.#messageQueue) {
+			for (const e of this.#endpoints.values()) {
+				e.send(message);
+			}
+		}
+		this.#messageQueue.length = 0;
 	}
 }
