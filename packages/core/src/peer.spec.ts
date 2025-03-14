@@ -124,6 +124,93 @@ describe('Peer', () => {
 		expectErrors(onError, []);
 	});
 
+	test(`send() should queue messages sent before connection establishing`, () => {
+		const one = createPeer('one');
+		const two = createPeer('two');
+		const three = createPeer('three');
+
+		// cache messages
+		one.send({ type: 'known', version: '1.0' });
+		three.send({ type: 'known', version: '1.0' });
+
+		// 1-2, 1-3
+		one.listen('two');
+		one.listen('three');
+		two.connect('one');
+		// 1:(connect-2), 2:(connect-1), 2:(known-1)
+		three.connect('one');
+		// 2:(connect-3), 1:(connect-3), 1:(known-3), 2:(known-3),
+		// 3:connect(1,2), 3:(known-1)
+
+		expectMessages(onMessage, [
+			{
+				one: {
+					from: 'two',
+					to: ['one'],
+					payload: { type: 'connect', version: '1.0', knownPeers: [], connected: ['two'] },
+				},
+			},
+			{
+				two: {
+					from: 'one',
+					to: ['two'],
+					payload: { type: 'connect', version: '1.0', knownPeers: [], connected: ['one'] },
+				},
+			},
+			{
+				two: {
+					from: 'one',
+					to: [],
+					payload: { type: 'known', version: '1.0' },
+				},
+			},
+			{
+				two: {
+					from: 'one',
+					to: [],
+					payload: { type: 'connect', version: '1.0', knownPeers: [], connected: ['three'] },
+				},
+			},
+			{
+				one: {
+					from: 'three',
+					to: ['one'],
+					payload: { type: 'connect', version: '1.0', knownPeers: [], connected: ['three'] },
+				},
+			},
+			{
+				one: {
+					from: 'three',
+					to: [],
+					payload: { type: 'known', version: '1.0' },
+				},
+			},
+			{
+				two: {
+					from: 'three',
+					to: [],
+					payload: { type: 'known', version: '1.0' },
+				},
+			},
+			{
+				three: {
+					from: 'one',
+					to: ['three'],
+					payload: { type: 'connect', version: '1.0', knownPeers: [], connected: ['one', 'two'] },
+				},
+			},
+			{
+				three: {
+					from: 'one',
+					to: [],
+					payload: { type: 'known', version: '1.0' },
+				},
+			},
+		]);
+
+		expectErrors(onError, []);
+	});
+
 	test(`send() should fail when exchanging unknown messages`, () => {
 		const one = createPeer('one');
 		const two = createPeer('two');
