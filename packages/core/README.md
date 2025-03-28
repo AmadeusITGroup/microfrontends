@@ -56,7 +56,7 @@ one.listen('two');
 const two = new MessagePeer({ id: 'two' });
 two.connect('one');
 
-// if connecton crosses iFrames, you might need to provide
+// if connection crosses iFrames, you might need to provide
 // expected window and origin for both `connect` and `listen` methods
 one.listen('two', {
   window: iframe.contentWindow,
