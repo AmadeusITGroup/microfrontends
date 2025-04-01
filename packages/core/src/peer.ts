@@ -499,7 +499,6 @@ export class MessagePeer<M extends Message> implements MessagePeerType<M> {
 					for (const { check } of this.#messageChecks) {
 						check(message, this);
 					}
-					logger(`PEER(${this.id}): message validated`, message);
 					this.#onMessage?.(message);
 				}
 			} catch (error) {

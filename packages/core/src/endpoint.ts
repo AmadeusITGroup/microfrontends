@@ -113,7 +113,7 @@ export class Endpoint<M extends Message> implements EndpointType<M> {
 							this.#port.onmessage = (event: MessageEvent<RoutedMessage<M>>) => {
 								const message = event.data;
 								logger(
-									`EP(${this.id}): message received from '${this.#remoteId ?? '?'}':`,
+									`EP(${this.id}): '${payload.type}' message received from '${this.#remoteId ?? '?'}':`,
 									message,
 								);
 								this.#processMessage(message);
@@ -161,7 +161,10 @@ export class Endpoint<M extends Message> implements EndpointType<M> {
 				this.#port.onmessage = (event: MessageEvent<RoutedMessage<M & HandshakeMessage>>) => {
 					const message = event.data;
 					const payload = message.payload;
-					logger(`EP(${this.id}): message received from '${this.#remoteId ?? '?'}':`, message);
+					logger(
+						`EP(${this.id}): '${payload.type}' message received from '${this.#remoteId ?? '?'}':`,
+						message,
+					);
 
 					// Connected
 					if (this.#connected) {
@@ -282,7 +285,6 @@ export class Endpoint<M extends Message> implements EndpointType<M> {
 		try {
 			// validating incoming message structure
 			checkMessageHasCorrectStructure(message);
-			logger(`EP(${this.id}): message validated:`, message);
 
 			if (message.payload.type === 'handshake') {
 				// TODO: what if we receive handshake, throw error ?
