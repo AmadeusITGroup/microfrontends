@@ -1,5 +1,5 @@
 import type { HandshakeMessage, Message, RoutedMessage, ServiceMessage } from './message';
-import { checkMessageHasCorrectStructure, logger } from './utils';
+import { checkMessageHasCorrectStructure, checkOriginIsValid, logger } from './utils';
 import { MessageError } from './message-error';
 import { LocalMessageChannel } from './local-message-channel';
 
@@ -255,6 +255,9 @@ export class Endpoint<M extends Message> implements EndpointType<M> {
 		// window
 		const hostWindow = options?.window || window;
 		const hostOrigin = options?.origin || window.origin;
+
+		// throw error if origin is not valid
+		checkOriginIsValid(hostOrigin);
 
 		// messageHandling
 		this.#onMessage = options?.onMessage;

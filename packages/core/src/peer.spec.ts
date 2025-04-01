@@ -71,6 +71,22 @@ describe('Peer', () => {
 		expect(peer.knownPeers).toEqual(new Map([['one', []]]));
 	});
 
+	test('connect()/listen() should check provided origin', () => {
+		const peer = new MessagePeer({ id: 'one' });
+
+		// should throw because of the trailing slash
+		expect(() => {
+			peer.listen('two', {
+				origin: 'https://test.com/',
+			});
+		}).toThrow();
+		expect(() => {
+			peer.connect('two', {
+				origin: 'https://test.com/',
+			});
+		}).toThrow();
+	});
+
 	test(`connect() should connect to another peer`, () => {
 		const one = new MessagePeer({ id: 'one' });
 		const two = new MessagePeer({ id: 'two' });

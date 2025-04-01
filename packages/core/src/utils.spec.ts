@@ -1,4 +1,4 @@
-import { checkMessageHasCorrectStructure } from './utils';
+import { checkMessageHasCorrectStructure, checkOriginIsValid } from './utils';
 
 describe('checkMessageHasCorrectStructure()', () => {
 	test(`should not throw when receiving a correctly structured message`, () => {
@@ -57,6 +57,26 @@ describe('checkMessageHasCorrectStructure()', () => {
 			} as any),
 		).toThrow(
 			`Message should have 'payload' property that has 'type'(string) and 'version'(string) defined`,
+		);
+	});
+});
+
+describe('checkOriginIsValid()', () => {
+	test(`should not throw when receiving a valid origin`, () => {
+		expect(() => checkOriginIsValid('https://test.com')).not.toThrow();
+	});
+
+	test(`should throw when receiving an invalid origin`, () => {
+		expect(() => checkOriginIsValid(null as any)).toThrow(`'null' is not a valid URL`);
+		expect(() => checkOriginIsValid(undefined as any)).toThrow(`'undefined' is not a valid URL`);
+		expect(() => checkOriginIsValid('not a valid URL')).toThrow(
+			`'not a valid URL' is not a valid URL`,
+		);
+	});
+
+	test(`should throw when receiving an erroneous origin`, () => {
+		expect(() => checkOriginIsValid('https://test.com/')).toThrow(
+			`'https://test.com/' is not a valid origin, did you mean 'https://test.com'?`,
 		);
 	});
 });

@@ -60,3 +60,14 @@ export function checkMessageHasCorrectStructure(message: RoutedMessage<Message>)
 		);
 	}
 }
+
+export function checkOriginIsValid(origin: string) {
+	const parsedURL = URL.parse(origin);
+	if (!parsedURL) {
+		throw new Error(`'${origin}' is not a valid URL`);
+	}
+
+	if (parsedURL.origin !== origin) {
+		throw new Error(`'${origin}' is not a valid origin, did you mean '${parsedURL.origin}'?`);
+	}
+}
