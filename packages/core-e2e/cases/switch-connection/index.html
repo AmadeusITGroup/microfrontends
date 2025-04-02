@@ -60,10 +60,11 @@
 	// create host peer
 	const host = new MessagePeer({
 		id: 'host',
-		onMessage,
-		onServiceMessage: onMessage,
 		knownMessages,
 	});
+
+	host.messages.subscribe(onMessage);
+	host.serviceMessages.subscribe(onMessage);
 
 	// create client-0 at init
 	createClient('client-0', 'http://localhost:8092');

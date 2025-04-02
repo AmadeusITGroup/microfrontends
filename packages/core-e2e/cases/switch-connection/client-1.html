@@ -15,10 +15,11 @@
 
 	const client = new MessagePeer({
 		id: 'client-1',
-		onMessage,
-		onServiceMessage: onMessage,
 		knownMessages,
 	});
+
+	client.messages.subscribe(onMessage);
+	client.serviceMessages.subscribe(onMessage);
 
 	client.connect('host', {
 		window: window.parent,

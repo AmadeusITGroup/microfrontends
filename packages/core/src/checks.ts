@@ -15,9 +15,9 @@ export interface MessageCheck<M extends Message> {
  * @param message Message to check
  * @param peer Endpoint that processes the message
  */
-export function checkMessageIsKnown(
-	message: RoutedMessage<Message>,
-	peer: MessagePeerType<Message>,
+export function checkMessageIsKnown<M extends Message>(
+	message: RoutedMessage<M>,
+	peer: MessagePeerType<M>,
 ) {
 	const knownMessages = peer.knownPeers.get(peer.id);
 	const { payload } = message;
@@ -35,9 +35,9 @@ export function checkMessageIsKnown(
  * @param message Message to check
  * @param peer Endpoint that processes the message
  */
-export function checkMessageVersionIsKnown(
-	message: RoutedMessage<Message>,
-	peer: MessagePeerType<Message>,
+export function checkMessageVersionIsKnown<M extends Message>(
+	message: RoutedMessage<M>,
+	peer: MessagePeerType<M>,
 ) {
 	const knownMessages = peer.knownPeers.get(peer.id);
 	const { payload } = message;
@@ -60,13 +60,15 @@ export function checkMessageVersionIsKnown(
 /**
  * Default message checks that peer performs on incoming messages
  */
-export const PEER_MESSAGE_CHECKS: MessageCheck<Message>[] = [
-	{
-		description: 'Check that message is known',
-		check: checkMessageIsKnown,
-	},
-	{
-		description: 'Check that message version is known',
-		check: checkMessageVersionIsKnown,
-	},
-];
+export function defaultMessageChecks<M extends Message>(): MessageCheck<M>[] {
+	return [
+		{
+			description: 'Check that message is known',
+			check: checkMessageIsKnown,
+		},
+		{
+			description: 'Check that message version is known',
+			check: checkMessageVersionIsKnown,
+		},
+	];
+}
