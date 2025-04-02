@@ -93,23 +93,27 @@ describe('MessagePeerService Interactions', () => {
 		jest.restoreAllMocks();
 	});
 
-	test('should connect and exchange messages', () => {
+	test('should connect and exchange messages and errors', () => {
 		const messages: any[] = [];
 		const serviceMessages: any[] = [];
+		const errors: any[] = [];
 		s2.messages$.subscribe(({ payload }) =>
 			messages.push({ type: payload.type, version: payload.version }),
 		);
 		s2.serviceMessages$.subscribe(({ payload }) =>
 			serviceMessages.push({ type: payload.type, version: payload.version }),
 		);
+		s2.errors$.subscribe((error) => errors.push(error.message));
 
 		s1.listen('s2');
 		s2.connect('s1');
 
 		s1.send({ type: 'test', version: '1.0' });
+		s1.send({ type: 'test', version: '2.0' });
 
 		expect(messages).toEqual([{ type: 'test', version: '1.0' }]);
 		expect(serviceMessages).toEqual([{ type: 'connect', version: '1.0' }]);
+		expect(errors).toEqual(['Unknown message version "2.0". Known versions: ["1.0"]']);
 	});
 });
 

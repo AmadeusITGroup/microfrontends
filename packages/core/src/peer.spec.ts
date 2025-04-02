@@ -2,6 +2,7 @@ import type { MessagePeerType } from './peer';
 import { MessagePeer } from './peer';
 import { MessageError } from './message-error';
 import type { Message, RoutedMessage, ServiceMessage } from './message';
+import { from } from 'rxjs';
 
 /**
  * Mocking window event listeners to establish connection via custom events
@@ -47,13 +48,16 @@ describe('Peer', () => {
 	const knownMessages = [{ type: 'known', version: '1.0' }];
 
 	function createPeer(id: string, messages: Message[] = knownMessages): MessagePeerType<any> {
-		return new MessagePeer({
+		const peer = new MessagePeer({
 			id,
 			knownMessages: messages,
-			onMessage: (message: any) => onMessage({ [id]: message }),
-			onServiceMessage: (message: any) => onMessage({ [id]: message }),
-			onError: (error: any) => onError({ [id]: error }),
 		});
+
+		peer.messages.subscribe((message) => onMessage({ [id]: message }));
+		peer.serviceMessages.subscribe((message) => onMessage({ [id]: message }));
+		peer.errors.subscribe((error) => onError({ [id]: error }));
+
+		return peer;
 	}
 
 	beforeEach(() => {
@@ -1067,11 +1071,14 @@ describe('Peer', () => {
 		const two = new MessagePeer<Message | ServiceMessage>({
 			id: 'two',
 			knownMessages,
-			onMessage: ({ payload }: RoutedMessage<Message>) =>
-				onMessage({ type: payload.type, version: payload.version }),
-			onServiceMessage: ({ payload }: RoutedMessage<ServiceMessage>) =>
-				onServiceMessage({ type: payload.type, version: payload.version }),
 		});
+
+		two.messages.subscribe(({ payload }: RoutedMessage<Message>) =>
+			onMessage({ type: payload.type, version: payload.version }),
+		);
+		two.serviceMessages.subscribe(({ payload }: RoutedMessage<ServiceMessage>) =>
+			onServiceMessage({ type: payload.type, version: payload.version }),
+		);
 
 		// initial connect
 		one.listen('two');
@@ -1099,5 +1106,81 @@ describe('Peer', () => {
 			[{ type: 'declare_messages', version: '1.0' }],
 			[{ type: 'disconnect', version: '1.0' }],
 		]);
+	});
+
+	test(`'.messages' should receive simple messages`, () => {
+		const one = createPeer('one');
+		const two = createPeer('two');
+
+		const oneMessages: any[] = [];
+		const twoMessages: any[] = [];
+		one.messages.subscribe((message) => oneMessages.push(message.payload));
+		two.messages.subscribe((message) => twoMessages.push(message.payload));
+
+		one.listen('two');
+		two.connect('one');
+
+		one.send({ type: 'known', version: '1.0' });
+		two.send({ type: 'known', version: '1.0' });
+
+		expect(oneMessages).toEqual([{ type: 'known', version: '1.0' }]);
+		expect(twoMessages).toEqual([{ type: 'known', version: '1.0' }]);
+	});
+
+	test(`'.serviceMessages' should receive simple service messages`, () => {
+		const one = createPeer('one');
+		const two = createPeer('two');
+
+		const oneMessages: any[] = [];
+		const twoMessages: any[] = [];
+		one.serviceMessages.subscribe((message) => oneMessages.push(message.payload));
+		two.serviceMessages.subscribe((message) => twoMessages.push(message.payload));
+
+		one.listen('two');
+		two.connect('one');
+
+		expect(oneMessages).toEqual([
+			{ type: 'connect', version: '1.0', connected: ['two'], knownPeers: [] },
+		]);
+		expect(twoMessages).toEqual([
+			{ type: 'connect', version: '1.0', connected: ['one'], knownPeers: [] },
+		]);
+	});
+
+	test(`'.errors' should receive simple service messages`, () => {
+		const one = createPeer('one');
+		const two = createPeer('two');
+
+		const oneMessages: any[] = [];
+		one.errors.subscribe(({ message }) => oneMessages.push(message));
+
+		one.listen('two');
+		two.connect('one');
+
+		two.send({ type: 'known', version: '2.0' });
+		expect(oneMessages).toEqual(['Unknown message version "2.0". Known versions: ["1.0"]']);
+	});
+
+	test(`'.messages' should interop with 'rxjs' 'from()'`, () => {
+		const one = createPeer('one');
+		const two = createPeer('two');
+
+		const messages: any[] = [];
+		const subscription = from(one.messages).subscribe({
+			next: (message) => messages.push(message.payload),
+		});
+
+		expect(messages).toEqual([]);
+
+		one.listen('two');
+		two.connect('one');
+
+		two.send({ type: 'known', version: '1.0' });
+		expect(messages).toEqual([{ type: 'known', version: '1.0' }]);
+
+		subscription.unsubscribe();
+
+		two.send({ type: 'known', version: '1.0' });
+		expect(messages).toEqual([{ type: 'known', version: '1.0' }]);
 	});
 });

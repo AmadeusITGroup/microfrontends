@@ -45,11 +45,11 @@
 	// 0. no iframe
 	const host = new MessagePeer({
 		id: 'host',
-		onMessage: (m) => {
-			const messages = document.getElementById('messages');
-			messages.innerHTML += `<div id="${m.from}">${m.from}</div>`;
-		},
 		knownMessages,
+	});
+	host.messages.subscribe((m) => {
+		const messages = document.getElementById('messages');
+		messages.innerHTML += `<div id="${m.from}">${m.from}</div>`;
 	});
 	host.listen('client-0');
 	host.send(

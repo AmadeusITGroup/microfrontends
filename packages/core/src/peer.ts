@@ -3,7 +3,8 @@ import { Endpoint, EndpointType } from './endpoint';
 import { ErrorMessage, isServiceMessage, Message, RoutedMessage, ServiceMessage } from './message';
 import { MessageError } from './message-error';
 import { logger } from './utils';
-import { MessageCheck, PEER_MESSAGE_CHECKS } from './checks';
+import { MessageCheck, defaultMessageChecks } from './checks';
+import { Emitter, Subscribable } from './emitter';
 
 /**
  * Options to establish peer connection.
@@ -44,7 +45,7 @@ const DEFAULT_START_OPTIONS: Required<PeerConnectionOptions> = {
  * Options to pass when creating a new peer.
  * The only required option is the unique `id` of the peer.
  */
-export interface PeerOptions<M extends Message> {
+export interface PeerOptions {
 	/**
 	 * Unique identifier of the peer on the network it will be connected to
 	 */
@@ -53,23 +54,6 @@ export interface PeerOptions<M extends Message> {
 	 * List of known messages that the peer can receive, it can be amended later with {@link MessagePeerType#registerMessage()} method
 	 */
 	knownMessages?: Message[];
-	/**
-	 * Callback that is called when a new message is received by the peer.
-	 * To handle {@link ServiceMessage} like `connect` or `disconnect`, use the {@link PeerOptions#onServiceMessage} callback.
-	 * @param message - received message
-	 */
-	onMessage?: (message: RoutedMessage<M>) => void;
-	/**
-	 * Callback that is called when a new {@link ServiceMessage} is received by the peer
-	 * @param message - received service message
-	 */
-	onServiceMessage?: (message: RoutedMessage<ServiceMessage>) => void;
-	/**
-	 * Callback that is called when an error occurs during received message processing locally.
-	 * The {@link ErrorMessage} will be sent back to the sender of the message automatically.
-	 * @param error - error that occurred
-	 */
-	onError?: (error: MessageError) => void;
 }
 
 /**
@@ -85,6 +69,23 @@ export interface MessagePeerType<M extends Message> {
 	 * List of other known peers on the network and types of messages they can receive
 	 */
 	get knownPeers(): Map<string, Message[]>;
+
+	/**
+	 * A {@link Subscribable} that emits a message received by the peer
+	 * To handle {@link ServiceMessage} like `connect` or `disconnect`, use the {@link MessagePeer#serviceMessages} stream.
+	 */
+	get messages(): Subscribable<RoutedMessage<M>>;
+
+	/**
+	 * A {@link Subscribable} that emits a {@link ServiceMessage} is received by the peer.
+	 */
+	get serviceMessages(): Subscribable<RoutedMessage<ServiceMessage>>;
+
+	/**
+	 * A {@link Subscribable} that emits an error occurs during received message processing locally.
+	 * The {@link ErrorMessage} will be sent back to the sender of the message automatically
+	 */
+	get errors(): Subscribable<MessageError>;
 
 	/**
 	 * Connects to the peer with the given id
@@ -166,21 +167,17 @@ export class MessagePeer<M extends Message> implements MessagePeerType<M> {
 	readonly #endpoints = new Map<string, EndpointType<M>>();
 	readonly #endpointPeers = new Map<string, Set<string>>();
 
-	readonly #onMessage: PeerOptions<M>['onMessage'];
-	readonly #onServiceMessage: PeerOptions<M>['onServiceMessage'];
-	readonly #onError: PeerOptions<M>['onError'];
+	readonly #messageEmitter = new Emitter<RoutedMessage<M>>();
+	readonly #serviceMessageEmitter = new Emitter<RoutedMessage<ServiceMessage>>();
+	readonly #errorEmitter = new Emitter<MessageError>();
 
-	readonly #messageChecks: MessageCheck<M>[] = [...PEER_MESSAGE_CHECKS];
+	readonly #messageChecks: MessageCheck<M>[] = [...defaultMessageChecks<M>()];
 	readonly #knownPeers = new Map<string, Message[]>();
 
 	readonly #messageQueue: RoutedMessage<M | ServiceMessage>[] = [];
 
-	constructor(options: PeerOptions<M>) {
+	constructor(options: PeerOptions) {
 		this.#id = options.id;
-		this.#onMessage = options?.onMessage;
-		this.#onServiceMessage = options?.onServiceMessage;
-		this.#onError = options?.onError || ((error) => console.error(error, error.messageObject));
-
 		this.#knownPeers.set(this.id, []);
 
 		if (options.knownMessages) {
@@ -204,6 +201,27 @@ export class MessagePeer<M extends Message> implements MessagePeerType<M> {
 	 */
 	public get knownPeers(): Map<string, Message[]> {
 		return this.#knownPeers;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public get messages(): Subscribable<RoutedMessage<M>> {
+		return this.#messageEmitter;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public get serviceMessages(): Subscribable<RoutedMessage<ServiceMessage>> {
+		return this.#serviceMessageEmitter;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public get errors(): Subscribable<MessageError> {
+		return this.#errorEmitter;
 	}
 
 	/**
@@ -336,7 +354,11 @@ export class MessagePeer<M extends Message> implements MessagePeerType<M> {
 	}
 
 	#handleEndpointError(endpoint: EndpointType<M | ErrorMessage>, error: MessageError) {
-		this.#onError?.(error);
+		this.#errorEmitter.emit(error);
+
+		if (this.#errorEmitter.subscribers.size === 0) {
+			console.error(endpoint);
+		}
 
 		// sending back to the endpoint we got it from
 		endpoint.send({
@@ -427,7 +449,7 @@ export class MessagePeer<M extends Message> implements MessagePeerType<M> {
 						this.#sendQueuedMessages();
 
 						// 3. passing the message to the user
-						this.#onServiceMessage?.({
+						this.#serviceMessageEmitter.emit({
 							...message,
 							payload: { ...payload, knownPeers: [] },
 						} as any);
@@ -459,7 +481,7 @@ export class MessagePeer<M extends Message> implements MessagePeerType<M> {
 					}
 
 					// 3. passing the message to the user and further on the network
-					this.#onServiceMessage?.(message as any);
+					this.#serviceMessageEmitter.emit(message as any);
 					this.#forwardMessage(endpoint, message);
 					break;
 				}
@@ -467,7 +489,7 @@ export class MessagePeer<M extends Message> implements MessagePeerType<M> {
 				case 'declare_messages': {
 					logger(`PEER(${this.id}): declare_messages from '${message.from}'`, payload);
 					this.#registerRemoteMessages(message.from, payload.messages);
-					this.#onServiceMessage?.(message as any);
+					this.#serviceMessageEmitter.emit(message as any);
 					this.#forwardMessage(endpoint, message);
 					break;
 				}
@@ -475,7 +497,7 @@ export class MessagePeer<M extends Message> implements MessagePeerType<M> {
 				case 'error': {
 					logger(`PEER(${this.id}): 'error' message from '${message.from}'`, payload);
 					if (message.to.includes(this.id)) {
-						this.#onServiceMessage?.(message as any);
+						this.#serviceMessageEmitter.emit(message as any);
 					} else {
 						this.#forwardMessage(endpoint, message);
 					}
@@ -499,7 +521,7 @@ export class MessagePeer<M extends Message> implements MessagePeerType<M> {
 					for (const { check } of this.#messageChecks) {
 						check(message, this);
 					}
-					this.#onMessage?.(message);
+					this.#messageEmitter.emit(message);
 				}
 			} catch (error) {
 				logger(`PEER(${this.id}):`, error);

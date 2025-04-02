@@ -1,27 +1,35 @@
-import type {
+import {
 	Message,
+	MessageError,
+	MessagePeer,
 	MessagePeerType,
 	PeerConnectionOptions,
 	PeerSendOptions,
 	RoutedMessage,
 	ServiceMessage,
 } from '@amadeus-it-group/microfrontends';
-import { MessagePeer } from '@amadeus-it-group/microfrontends';
-import { Observable, Subject } from 'rxjs';
+import { from, Observable } from 'rxjs';
 import { inject, Injectable, InjectionToken } from '@angular/core';
 
 /**
  * Interface for the peer service that provides an observable for incoming messages
  */
-export interface MessagePeerServiceType<M extends Message> extends MessagePeerType<M> {
+export interface MessagePeerServiceType<M extends Message>
+	extends Omit<MessagePeerType<M>, 'messages' | 'serviceMessages' | 'errors'> {
 	/**
 	 * Observable for incoming messages
 	 */
 	get messages$(): Observable<RoutedMessage<M>>;
+
 	/**
 	 * Observable for incoming service messages
 	 */
 	get serviceMessages$(): Observable<RoutedMessage<ServiceMessage>>;
+
+	/**
+	 * Observable for peer local errors when processing messages
+	 */
+	get errors$(): Observable<MessageError>;
 }
 
 /**
@@ -64,20 +72,31 @@ export const MESSAGE_PEER_LISTEN_OPTIONS = new InjectionToken<PeerConnectionOpti
 @Injectable({ providedIn: 'root' })
 export class MessagePeerService<M extends Message> implements MessagePeerServiceType<M> {
 	readonly #peer: MessagePeerType<M>;
-	readonly #messages$ = new Subject<RoutedMessage<M>>();
-	readonly #serviceMessages$ = new Subject<RoutedMessage<ServiceMessage>>();
-
 	readonly #diConnectOptions = inject(MESSAGE_PEER_CONNECT_OPTIONS, { optional: true });
 	readonly #diListenOptions = inject(MESSAGE_PEER_LISTEN_OPTIONS, { optional: true });
+	/**
+	 * @inheritDoc
+	 */
+	messages$: Observable<RoutedMessage<M>>;
+	/**
+	 * @inheritDoc
+	 */
+	serviceMessages$: Observable<RoutedMessage<ServiceMessage>>;
+	/**
+	 * @inheritDoc
+	 */
+	errors$: Observable<MessageError>;
 
 	constructor() {
 		const config = inject(MESSAGE_PEER_CONFIG);
 		this.#peer = new MessagePeer<M>({
 			id: config.id,
-			onMessage: (message) => this.#messages$.next(message),
-			onServiceMessage: (message) => this.#serviceMessages$.next(message),
 			knownMessages: config.knownMessages,
 		});
+
+		this.messages$ = from(this.#peer.messages);
+		this.serviceMessages$ = from(this.#peer.serviceMessages);
+		this.errors$ = from(this.#peer.errors);
 	}
 
 	/**
@@ -112,20 +131,6 @@ export class MessagePeerService<M extends Message> implements MessagePeerService
 			peerId,
 			this.#diConnectOptions ? { ...this.#diConnectOptions, ...options } : options,
 		);
-	}
-
-	/**
-	 * @inheritDoc
-	 */
-	public get messages$(): Observable<RoutedMessage<M>> {
-		return this.#messages$.asObservable();
-	}
-
-	/**
-	 * @inheritDoc
-	 */
-	public get serviceMessages$(): Observable<RoutedMessage<ServiceMessage>> {
-		return this.#serviceMessages$.asObservable();
 	}
 
 	/**

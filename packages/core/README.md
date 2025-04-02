@@ -28,13 +28,7 @@ const peer = new MessagePeer({
   // unique identifier for this peer in the network
   id: 'one',
 
-  // callback to handle incoming messages
-  onMessage: (message) => {},
-
-  // handle service messages like `connect`, `disconnect`, etc.
-  onServiceMessage: (message) => {},
-
-  // list of messages this peer accepts after creation
+  // list of messages this peer accepts
   knownMessages: [
     { type: 'hello', version: '1.0' },
     { type: 'hello', version: '2.0' },
@@ -43,6 +37,8 @@ const peer = new MessagePeer({
 ```
 
 ### Connection to another peers
+
+A peer can either wait for incoming connections from a peer via `.listen()` or initiate a connection via `.connect()`.
 
 ```ts
 import { MessagePeer } from '@amadeus-it-group/microfrontends';
@@ -90,26 +86,26 @@ interface HelloMessage_2_0 extends Message {
 export type MyMessage = HelloMessage_1_0 | HelloMessage_2_0;
 ```
 
-### Sending messages
+### Sending and receiving messages
 
 ```ts
 import { MessagePeer } from '@amadeus-it-group/microfrontends';
 
 // Receiving messages
-const one = new MessagePeer<MyMessage>({
-  id: 'one',
-  onMessage: ({ payload }: MyMessage) => {
-    if (payload.type === 'hello') {
-      switch (payload.version) {
-        case '1.0':
-          console.log(payload.greeting); // string
-          break;
-        case '2.0':
-          console.log(payload.greetings); // string[]
-          break;
-      }
+const one = new MessagePeer<MyMessage>({ id: 'one' });
+
+// An observable-like interface consuming messages
+one.messages.subscribe(({ payload }: MyMessage) => {
+  if (payload.type === 'hello') {
+    switch (payload.version) {
+      case '1.0':
+        console.log(payload.greeting); // string
+        break;
+      case '2.0':
+        console.log(payload.greetings); // string[]
+        break;
     }
-  },
+  }
 });
 
 // Broadcast a message. Message will be type checked.
