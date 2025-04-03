@@ -3,6 +3,14 @@ import { MessageError } from './message-error';
 import type { MessagePeerType } from './peer';
 
 /**
+ * A strategy that a message peer uses to check messages upon reception.
+ * - `default` - checks that the message structure is correct (from, to, type, version and payload are present)
+ * - `type` - checks that the message type is known for the peer
+ * - `version` - checks that the message version is known for the peer
+ */
+export type MessageCheckStrategy = 'default' | 'type' | 'version';
+
+/**
  * A check that endpoint performs on messages
  */
 export interface MessageCheck<M extends Message> {
@@ -58,17 +66,28 @@ export function checkMessageVersionIsKnown<M extends Message>(
 }
 
 /**
- * Default message checks that peer performs on incoming messages
+ * Get default message checks for the given strategy
+ *
+ * @param strategy
  */
-export function defaultMessageChecks<M extends Message>(): MessageCheck<M>[] {
-	return [
-		{
-			description: 'Check that message is known',
+export function getDefaultMessageChecks<M extends Message>(
+	strategy: MessageCheckStrategy,
+): MessageCheck<M>[] {
+	const checks: MessageCheck<M>[] = [];
+
+	if (strategy === 'type' || strategy === 'version') {
+		checks.push({
+			description: 'Check that message type is known',
 			check: checkMessageIsKnown,
-		},
-		{
+		});
+	}
+
+	if (strategy === 'version') {
+		checks.push({
 			description: 'Check that message version is known',
 			check: checkMessageVersionIsKnown,
-		},
-	];
+		});
+	}
+
+	return checks;
 }

@@ -4,6 +4,7 @@ import {
 	MessagePeer,
 	MessagePeerType,
 	PeerConnectionOptions,
+	PeerOptions,
 	PeerSendOptions,
 	RoutedMessage,
 	ServiceMessage,
@@ -33,18 +34,9 @@ export interface MessagePeerServiceType<M extends Message>
 }
 
 /**
- * Configuration for the peer service that should be provided in the DI container before using the service
+ * @inheritDoc
  */
-export interface MessagePeerConfig {
-	/**
-	 * Unique peer identifier on the network
-	 */
-	id: string;
-	/**
-	 * List of known messages that the peer can receive
-	 */
-	knownMessages?: Message[];
-}
+export interface MessagePeerConfig extends PeerOptions {}
 
 /**
  * Injection token for {@link MessagePeerConfig}, required for the {@link MessagePeerService} configuration.
@@ -92,6 +84,7 @@ export class MessagePeerService<M extends Message> implements MessagePeerService
 		this.#peer = new MessagePeer<M>({
 			id: config.id,
 			knownMessages: config.knownMessages,
+			messageCheckStrategy: config.messageCheckStrategy,
 		});
 
 		this.messages$ = from(this.#peer.messages);

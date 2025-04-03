@@ -1,4 +1,4 @@
-import type { MessagePeerType } from './peer';
+import type { MessagePeerType, PeerOptions } from './peer';
 import { MessagePeer } from './peer';
 import { MessageError } from './message-error';
 import type { Message, RoutedMessage, ServiceMessage } from './message';
@@ -47,11 +47,10 @@ describe('Peer', () => {
 	let onError: any;
 	const knownMessages = [{ type: 'known', version: '1.0' }];
 
-	function createPeer(id: string, messages: Message[] = knownMessages): MessagePeerType<any> {
-		const peer = new MessagePeer({
-			id,
-			knownMessages: messages,
-		});
+	const DEFAULT_OPTIONS: Omit<PeerOptions, 'id'> = { knownMessages };
+
+	function createPeer(id: string, options?: Omit<PeerOptions, 'id'>): MessagePeerType<any> {
+		const peer = new MessagePeer({ id, ...DEFAULT_OPTIONS, ...options });
 
 		peer.messages.subscribe((message) => onMessage({ [id]: message }));
 		peer.serviceMessages.subscribe((message) => onMessage({ [id]: message }));
@@ -232,8 +231,8 @@ describe('Peer', () => {
 	});
 
 	test(`send() should fail when exchanging unknown messages`, () => {
-		const one = createPeer('one');
-		const two = createPeer('two');
+		const one = createPeer('one', { messageCheckStrategy: 'version' });
+		const two = createPeer('two', { messageCheckStrategy: 'version' });
 
 		// 1-2
 		one.listen('two');
@@ -416,7 +415,9 @@ describe('Peer', () => {
 	test(`should propagate 'knownMessages' when adding new peers`, () => {
 		const one = createPeer('one');
 		const two = createPeer('two');
-		const three = createPeer('three', [{ type: 'three-only', version: '1.0' }]);
+		const three = createPeer('three', {
+			knownMessages: [{ type: 'three-only', version: '1.0' }],
+		});
 
 		// 1-2, 2-*
 		one.listen('two');
@@ -528,8 +529,10 @@ describe('Peer', () => {
 
 	test(`should forward unknown messages`, () => {
 		const one = createPeer('one');
-		const two = createPeer('two');
-		const three = createPeer('three', [{ type: 'three-only', version: '1.0' }]);
+		const two = createPeer('two', { messageCheckStrategy: 'type' });
+		const three = createPeer('three', {
+			knownMessages: [{ type: 'three-only', version: '1.0' }],
+		});
 
 		// 1-2, 2-3
 		one.listen('two');
@@ -908,8 +911,8 @@ describe('Peer', () => {
 	});
 
 	test(`should register new messages`, () => {
-		const one = createPeer('one', []);
-		const two = createPeer('two', []);
+		const one = createPeer('one', { knownMessages: [] });
+		const two = createPeer('two', { knownMessages: [] });
 
 		// 1-2
 		one.listen('two');
@@ -956,8 +959,8 @@ describe('Peer', () => {
 	});
 
 	test(`should register message and send declaration`, () => {
-		const one = createPeer('one', []);
-		const two = createPeer('two', []);
+		const one = createPeer('one', { knownMessages: [] });
+		const two = createPeer('two', { knownMessages: [] });
 		const three = createPeer('three');
 
 		// 1-2, 2-3
@@ -1147,8 +1150,8 @@ describe('Peer', () => {
 		]);
 	});
 
-	test(`'.errors' should receive simple service messages`, () => {
-		const one = createPeer('one');
+	test(`'.errors' should receive error messages`, () => {
+		const one = createPeer('one', { messageCheckStrategy: 'version' });
 		const two = createPeer('two');
 
 		const oneMessages: any[] = [];
@@ -1182,5 +1185,90 @@ describe('Peer', () => {
 
 		two.send({ type: 'known', version: '1.0' });
 		expect(messages).toEqual([{ type: 'known', version: '1.0' }]);
+	});
+
+	test(`should respect 'default' message check strategy`, () => {
+		const one = new MessagePeer({ id: 'one' });
+		const two = new MessagePeer({ id: 'two' });
+
+		const messages: any[] = [];
+		const errors: any[] = [];
+		two.messages.subscribe((message) => messages.push(message.payload));
+		two.errors.subscribe(({ message }) => errors.push(message));
+
+		// 1-2
+		one.listen('two');
+		two.connect('one');
+
+		one.send({ type: 'known', version: '1.0' });
+		one.send({ type: 'known', version: '2.0' });
+		one.send({ type: 'unknown', version: '1.0' });
+		one.send({ type: 'malformed' } as any);
+
+		expect(messages).toEqual([
+			{ type: 'known', version: '1.0' },
+			{ type: 'known', version: '2.0' },
+			{ type: 'unknown', version: '1.0' },
+		]);
+
+		expect(errors).toEqual([
+			`Message should have 'payload' property that has 'type'(string) and 'version'(string) defined`,
+		]);
+	});
+
+	test(`should respect 'type' message check strategy`, () => {
+		const one = new MessagePeer({ id: 'one' });
+		const two = new MessagePeer({ id: 'two', messageCheckStrategy: 'type', knownMessages });
+
+		const messages: any[] = [];
+		const errors: any[] = [];
+		two.messages.subscribe((message) => messages.push(message.payload));
+		two.errors.subscribe(({ message }) => errors.push(message));
+
+		// 1-2
+		one.listen('two');
+		two.connect('one');
+
+		one.send({ type: 'known', version: '1.0' });
+		one.send({ type: 'known', version: '2.0' });
+		one.send({ type: 'unknown', version: '1.0' });
+		one.send({ type: 'malformed' } as any);
+
+		expect(messages).toEqual([
+			{ type: 'known', version: '1.0' },
+			{ type: 'known', version: '2.0' },
+		]);
+
+		expect(errors).toEqual([
+			`Unknown message type "unknown". Known types: ["known"]`,
+			`Message should have 'payload' property that has 'type'(string) and 'version'(string) defined`,
+		]);
+	});
+
+	test(`should respect 'version' message check strategy`, () => {
+		const one = new MessagePeer({ id: 'one' });
+		const two = new MessagePeer({ id: 'two', messageCheckStrategy: 'version', knownMessages });
+
+		const messages: any[] = [];
+		const errors: any[] = [];
+		two.messages.subscribe((message) => messages.push(message.payload));
+		two.errors.subscribe(({ message }) => errors.push(message));
+
+		// 1-2
+		one.listen('two');
+		two.connect('one');
+
+		one.send({ type: 'known', version: '1.0' });
+		one.send({ type: 'known', version: '2.0' });
+		one.send({ type: 'unknown', version: '1.0' });
+		one.send({ type: 'malformed' } as any);
+
+		expect(messages).toEqual([{ type: 'known', version: '1.0' }]);
+
+		expect(errors).toEqual([
+			`Unknown message version "2.0". Known versions: ["1.0"]`,
+			`Unknown message type "unknown". Known types: ["known"]`,
+			`Message should have 'payload' property that has 'type'(string) and 'version'(string) defined`,
+		]);
 	});
 });
