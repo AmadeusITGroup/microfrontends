@@ -16,6 +16,14 @@ The Amadeus Toolkit for Micro Frontends provides a messaging system that allows 
 
 ## Common use-cases
 
+- [Creating a Message Peer](#creating-a-message-peer)
+- [Connecting to another peer](#connecting-to-another-peer)
+- [Declaring Message types](#declaring-message-types)
+- [Sending and receiving messages](#sending-and-receiving-messages)
+- [Service messages](#service-messages)
+- [Logging](#logging)
+- [Information about the network](#information-about-the-network)
+
 ### Creating a Message Peer
 
 You can create several message peers and connect them to each other in any way avoiding loops. You need to provide some options when creating a peer. Only `id` is technically required.
@@ -36,9 +44,9 @@ const peer = new MessagePeer({
 });
 ```
 
-### Connection to another peers
+### Connecting to another peer
 
-A peer can either wait for incoming connections from a peer via `.listen()` or initiate a connection via `.connect()`.
+A peer can either wait for incoming connections from another peer via `.listen()` or initiate a connection itself via `.connect()`.
 
 ```ts
 import { MessagePeer } from '@amadeus-it-group/microfrontends';
@@ -128,7 +136,41 @@ two.send(
 );
 ```
 
-### Get information about the network
+### Service messages
+
+There are some lifecycle messages (`ServiceMessage`) that are automatically sent by the library. You can listen to them using the `.serviceMessages` stream to avoid polluting your own messages in `.message` stream.
+
+```ts
+import { MessagePeer, ServiceMessage } from '@amadeus-it-group/microfrontends';
+
+const peer = new MessagePeer({ id: 'one' });
+
+peer.serviceMessages.subscribe(({ payload }: ServiceMessage) => {
+  switch (payload.type) {
+    case 'connect':
+      // instance of `ConnectMessage`
+      break;
+    case 'disconnect':
+      // instance of `DisconnectMessage`
+      break;
+    case 'error':
+      // instance of `ErrorMessage`
+      break;
+  }
+});
+```
+
+### Logging
+
+Simple logging can be enabled via `enableLogging()` method. It will log all messages sent and received for debugging purposes.
+
+```ts
+import { enableLogging } from '@amadeus-it-group/microfrontends';
+
+enableLogging(true);
+```
+
+### Information about the network
 
 ```ts
 // List all known peers and their accepted messages
