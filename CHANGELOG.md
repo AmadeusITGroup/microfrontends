@@ -1,3 +1,36 @@
+# [0.0.5](https://github.com/AmadeusITGroup/microfrontends/compare/0.0.4...0.0.5) (2025-04-03)
+
+New `.messages`, `.serviceMessages` and `.errors` API that make it easier to dissociate peer creation with and places where messages might be consumed. It uses `Obsevable` and `rxjs` compatible implementation for streams of messages.
+
+### Features
+
+- Introduce new APIs for message consumption ([1216d49](https://github.com/AmadeusITGroup/microfrontends/pull/19/commits/1216d490c45772c396233430e4fd22d9b4b4b7f5))
+
+### Fixes
+
+- Throw an error if provided origin is invalid in `.connect()` or `.listen()` calls ([db062bf](https://github.com/AmadeusITGroup/microfrontends/commit/db062bf2c4376b1a2078512518cc05d86417d6f6))
+
+### BREAKING CHANGES
+
+- No longer possible to get messages via `onMessage`, `onServiceMessage` and `onError`at construction time, one should use`.messages`, `.serviceMessages` and `.errors` subscribable streams:
+
+```ts
+// BEFORE
+const peer = new MessagePeer({
+  id: 'one',
+  onMessage: (m) => {},
+  onServiceMessage: (m) => {},
+  onError: (e) => {},
+});
+
+// AFTER
+const peer = new MessagePeer({ id: 'one' });
+
+peer.messages.subscribe((m) => {});
+peer.serviceMessages.subscribe((m) => {});
+peer.errors.subscribe((e) => {});
+```
+
 # [0.0.4](https://github.com/AmadeusITGroup/microfrontends/compare/0.0.3...0.0.4) (2025-03-14)
 
 ### Features
