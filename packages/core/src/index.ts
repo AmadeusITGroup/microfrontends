@@ -12,3 +12,4 @@ export type { MessagePeerType, PeerConnectionOptions, PeerOptions, PeerSendOptio
 export { MessageError } from './message-error';
 export { enableLogging } from './utils';
 export type { Subscribable } from './emitter';
+export type { MessageCheckStrategy } from './checks';

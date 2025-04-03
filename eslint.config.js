@@ -20,6 +20,7 @@ export default tsEslint.config(
 		files: ['**/*.ts'],
 		rules: {
 			'@typescript-eslint/no-unused-expressions': 'off',
+			'@typescript-eslint/no-empty-object-type': 'off',
 		},
 	},
 	{

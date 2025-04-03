@@ -3,7 +3,7 @@ import { Endpoint, EndpointType } from './endpoint';
 import { ErrorMessage, isServiceMessage, Message, RoutedMessage, ServiceMessage } from './message';
 import { MessageError } from './message-error';
 import { logger } from './utils';
-import { MessageCheck, defaultMessageChecks } from './checks';
+import { getDefaultMessageChecks, MessageCheck, MessageCheckStrategy } from './checks';
 import { Emitter, Subscribable } from './emitter';
 
 /**
@@ -54,6 +54,11 @@ export interface PeerOptions {
 	 * List of known messages that the peer can receive, it can be amended later with {@link MessagePeerType#registerMessage()} method
 	 */
 	knownMessages?: Message[];
+	/**
+	 * Defines how peer will validate messages upon reception.
+	 * By 'default' it will check only that the message structure is correct.
+	 */
+	messageCheckStrategy?: MessageCheckStrategy;
 }
 
 /**
@@ -171,7 +176,7 @@ export class MessagePeer<M extends Message> implements MessagePeerType<M> {
 	readonly #serviceMessageEmitter = new Emitter<RoutedMessage<ServiceMessage>>();
 	readonly #errorEmitter = new Emitter<MessageError>();
 
-	readonly #messageChecks: MessageCheck<M>[] = [...defaultMessageChecks<M>()];
+	readonly #defaultMessageChecks: MessageCheck<Message>[];
 	readonly #knownPeers = new Map<string, Message[]>();
 
 	readonly #messageQueue: RoutedMessage<M | ServiceMessage>[] = [];
@@ -185,6 +190,8 @@ export class MessagePeer<M extends Message> implements MessagePeerType<M> {
 				this.registerMessage(message);
 			}
 		}
+
+		this.#defaultMessageChecks = getDefaultMessageChecks(options.messageCheckStrategy || 'default');
 
 		logger(`PEER(${this.id}): created`, this.#knownPeers);
 	}
@@ -518,7 +525,7 @@ export class MessagePeer<M extends Message> implements MessagePeerType<M> {
 		else {
 			try {
 				if (message.to.includes(this.id) || message.to.length === 0) {
-					for (const { check } of this.#messageChecks) {
+					for (const { check } of this.#defaultMessageChecks) {
 						check(message, this);
 					}
 					this.#messageEmitter.emit(message);

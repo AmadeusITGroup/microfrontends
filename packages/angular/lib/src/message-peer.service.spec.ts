@@ -77,14 +77,20 @@ describe('MessagePeerService Interactions', () => {
 		s1 = Injector.create({
 			providers: [
 				MessagePeerService,
-				{ provide: MESSAGE_PEER_CONFIG, useValue: { id: 's1', knownMessages } },
+				{
+					provide: MESSAGE_PEER_CONFIG,
+					useValue: { id: 's1', knownMessages, messageCheckStrategy: 'version' },
+				},
 			],
 		}).get(MessagePeerService);
 
 		s2 = Injector.create({
 			providers: [
 				MessagePeerService,
-				{ provide: MESSAGE_PEER_CONFIG, useValue: { id: 's2', knownMessages } },
+				{
+					provide: MESSAGE_PEER_CONFIG,
+					useValue: { id: 's2', knownMessages, messageCheckStrategy: 'version' },
+				},
 			],
 		}).get(MessagePeerService);
 	});
