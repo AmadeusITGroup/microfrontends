@@ -1,5 +1,6 @@
 import { Message, RoutedMessage } from './message';
 import { MessageError } from './message-error';
+import { MessageCheckStrategy } from './checks';
 
 let LOGGING_ENABLED = false;
 
@@ -24,9 +25,13 @@ export function logger(...args: unknown[]) {
 /**
  * Checks that message has correct 'from', 'to', 'payload', 'payload.type' and 'payload.version' properties
  * @param message Message to check
+ * @param strategy Message check strategy
  * @throws MessageError
  */
-export function checkMessageHasCorrectStructure(message: RoutedMessage<Message>) {
+export function checkMessageHasCorrectStructure(
+	message: RoutedMessage<Message>,
+	strategy: MessageCheckStrategy = 'default',
+) {
 	// check 'from' and 'to'
 	if (
 		!(
@@ -43,20 +48,20 @@ export function checkMessageHasCorrectStructure(message: RoutedMessage<Message>)
 		);
 	}
 
-	// check 'payload', 'payload.type' and 'payload.version'
+	// check 'payload', 'payload.type'
 	const { payload } = message;
-	if (
-		!(
-			payload &&
-			payload.type &&
-			payload.version &&
-			typeof payload.type === 'string' &&
-			typeof payload.version === 'string'
-		)
-	) {
+	if (!(payload && payload.type && typeof payload.type === 'string')) {
 		throw new MessageError(
 			message,
-			`Message should have 'payload' property that has 'type'(string) and 'version'(string) defined`,
+			`Message should have 'payload' property that has 'type'(string) defined`,
+		);
+	}
+
+	// check 'payload.version' only if necessary
+	if (strategy === 'version' && !(payload.version && typeof payload.version === 'string')) {
+		throw new MessageError(
+			message,
+			`Message should have 'payload' property that has 'version'(string) defined`,
 		);
 	}
 }

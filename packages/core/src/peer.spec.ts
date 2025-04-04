@@ -1203,7 +1203,7 @@ describe('Peer', () => {
 		one.send({ type: 'known', version: '1.0' });
 		one.send({ type: 'known', version: '2.0' });
 		one.send({ type: 'unknown', version: '1.0' });
-		one.send({ type: 'malformed' } as any);
+		one.send({ version: 'malformed' } as any);
 
 		expect(messages).toEqual([
 			{ type: 'known', version: '1.0' },
@@ -1212,7 +1212,7 @@ describe('Peer', () => {
 		]);
 
 		expect(errors).toEqual([
-			`Message should have 'payload' property that has 'type'(string) and 'version'(string) defined`,
+			`Message should have 'payload' property that has 'type'(string) defined`,
 		]);
 	});
 
@@ -1232,17 +1232,15 @@ describe('Peer', () => {
 		one.send({ type: 'known', version: '1.0' });
 		one.send({ type: 'known', version: '2.0' });
 		one.send({ type: 'unknown', version: '1.0' });
-		one.send({ type: 'malformed' } as any);
+		one.send({ type: 'known' });
 
 		expect(messages).toEqual([
 			{ type: 'known', version: '1.0' },
 			{ type: 'known', version: '2.0' },
+			{ type: 'known' },
 		]);
 
-		expect(errors).toEqual([
-			`Unknown message type "unknown". Known types: ["known"]`,
-			`Message should have 'payload' property that has 'type'(string) and 'version'(string) defined`,
-		]);
+		expect(errors).toEqual([`Unknown message type "unknown". Known types: ["known"]`]);
 	});
 
 	test(`should respect 'version' message check strategy`, () => {
@@ -1261,14 +1259,14 @@ describe('Peer', () => {
 		one.send({ type: 'known', version: '1.0' });
 		one.send({ type: 'known', version: '2.0' });
 		one.send({ type: 'unknown', version: '1.0' });
-		one.send({ type: 'malformed' } as any);
+		one.send({ type: 'malformed' });
 
 		expect(messages).toEqual([{ type: 'known', version: '1.0' }]);
 
 		expect(errors).toEqual([
 			`Unknown message version "2.0". Known versions: ["1.0"]`,
 			`Unknown message type "unknown". Known types: ["known"]`,
-			`Message should have 'payload' property that has 'type'(string) and 'version'(string) defined`,
+			`Message should have 'payload' property that has 'version'(string) defined`,
 		]);
 	});
 });

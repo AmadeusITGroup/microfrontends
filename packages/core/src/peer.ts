@@ -2,7 +2,7 @@
 import { Endpoint, EndpointType } from './endpoint';
 import { ErrorMessage, isServiceMessage, Message, RoutedMessage, ServiceMessage } from './message';
 import { MessageError } from './message-error';
-import { logger } from './utils';
+import { checkMessageHasCorrectStructure, logger } from './utils';
 import { getDefaultMessageChecks, MessageCheck, MessageCheckStrategy } from './checks';
 import { Emitter, Subscribable } from './emitter';
 
@@ -176,6 +176,7 @@ export class MessagePeer<M extends Message> implements MessagePeerType<M> {
 	readonly #serviceMessageEmitter = new Emitter<RoutedMessage<ServiceMessage>>();
 	readonly #errorEmitter = new Emitter<MessageError>();
 
+	readonly #messageCheckStrategy: MessageCheckStrategy;
 	readonly #defaultMessageChecks: MessageCheck<Message>[];
 	readonly #knownPeers = new Map<string, Message[]>();
 
@@ -191,7 +192,8 @@ export class MessagePeer<M extends Message> implements MessagePeerType<M> {
 			}
 		}
 
-		this.#defaultMessageChecks = getDefaultMessageChecks(options.messageCheckStrategy || 'default');
+		this.#messageCheckStrategy = options.messageCheckStrategy || 'default';
+		this.#defaultMessageChecks = getDefaultMessageChecks(this.#messageCheckStrategy);
 
 		logger(`PEER(${this.id}): created`, this.#knownPeers);
 	}
@@ -244,7 +246,6 @@ export class MessagePeer<M extends Message> implements MessagePeerType<M> {
 			...options,
 			knownPeers: this.#knownPeers,
 			onMessage: (message) => this.#handleEndpointMessage(endpoint, message),
-			onError: (error: MessageError) => this.#handleEndpointError(endpoint, error),
 		});
 	}
 
@@ -268,7 +269,6 @@ export class MessagePeer<M extends Message> implements MessagePeerType<M> {
 			...options,
 			knownPeers: this.#knownPeers,
 			onMessage: (message) => this.#handleEndpointMessage(endpoint, message),
-			onError: (error: MessageError) => this.#handleEndpointError(endpoint, error),
 		});
 	}
 
@@ -364,7 +364,7 @@ export class MessagePeer<M extends Message> implements MessagePeerType<M> {
 		this.#errorEmitter.emit(error);
 
 		if (this.#errorEmitter.subscribers.size === 0) {
-			console.error(endpoint);
+			console.error(error);
 		}
 
 		// sending back to the endpoint we got it from
@@ -388,6 +388,16 @@ export class MessagePeer<M extends Message> implements MessagePeerType<M> {
 	 */
 	#handleEndpointMessage(endpoint: EndpointType<M>, message: RoutedMessage<M>) {
 		logger(`PEER(${this.id}): received message`, message, this.#knownPeers);
+
+		// validating incoming message structure
+		try {
+			checkMessageHasCorrectStructure(message, this.#messageCheckStrategy);
+		} catch (error) {
+			logger(`PEER(${this.id}): message is malformed`, message);
+			this.#handleEndpointError(endpoint, error as MessageError);
+			return;
+		}
+
 		const { payload } = message;
 
 		// handle service messages
