@@ -3,7 +3,6 @@ import { RouterLink, RouterOutlet } from '@angular/router';
 
 @Component({
 	selector: 'app-root',
-	standalone: true,
 	imports: [RouterOutlet, RouterLink],
 	template: `
 		<h1>Welcome!</h1>
@@ -16,6 +15,5 @@ import { RouterLink, RouterOutlet } from '@angular/router';
 
 		<router-outlet />
 	`,
-	styles: [],
 })
 export class AppComponent {}
