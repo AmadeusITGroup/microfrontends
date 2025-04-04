@@ -10,7 +10,7 @@ export interface Message {
 	/**
 	 * Message version
 	 */
-	version: string;
+	version?: string;
 }
 
 /**

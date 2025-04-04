@@ -30,11 +30,11 @@ describe('checkMessageHasCorrectStructure()', () => {
 
 	test(`should throw when receiving a message without payload`, () => {
 		expect(() => checkMessageHasCorrectStructure({ from: 'from', to: [] } as any)).toThrow(
-			`Message should have 'payload' property that has 'type'(string) and 'version'(string) defined`,
+			`Message should have 'payload' property that has 'type'(string) defined`,
 		);
 	});
 
-	test(`should throw when receiving a message with payload without type or version`, () => {
+	test(`should throw when receiving a message with payload without type`, () => {
 		expect(() =>
 			checkMessageHasCorrectStructure({
 				from: 'from',
@@ -43,10 +43,10 @@ describe('checkMessageHasCorrectStructure()', () => {
 					version: '1.0',
 				},
 			} as any),
-		).toThrow(
-			`Message should have 'payload' property that has 'type'(string) and 'version'(string) defined`,
-		);
+		).toThrow(`Message should have 'payload' property that has 'type'(string) defined`);
+	});
 
+	test(`should throw when receiving a message with payload without version`, () => {
 		expect(() =>
 			checkMessageHasCorrectStructure({
 				from: 'from',
@@ -55,9 +55,20 @@ describe('checkMessageHasCorrectStructure()', () => {
 					type: 'foo',
 				},
 			} as any),
-		).toThrow(
-			`Message should have 'payload' property that has 'type'(string) and 'version'(string) defined`,
-		);
+		).not.toThrow();
+
+		expect(() =>
+			checkMessageHasCorrectStructure(
+				{
+					from: 'from',
+					to: [],
+					payload: {
+						type: 'foo',
+					},
+				} as any,
+				'version',
+			),
+		).toThrow(`Message should have 'payload' property that has 'version'(string) defined`);
 	});
 });
 

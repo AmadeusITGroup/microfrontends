@@ -33,7 +33,6 @@ describe('Endpoint', () => {
 		endpoint.listen('two', {
 			knownPeers: new Map(),
 			onMessage: jest.fn(),
-			onError: jest.fn(),
 		});
 
 		expect(endpoint.remoteId).toBe('two');
@@ -57,7 +56,6 @@ describe('Endpoint', () => {
 		endpoint.connect('two', {
 			knownPeers,
 			onMessage: jest.fn(),
-			onError: jest.fn(),
 		});
 
 		// 2. checking the handshake was sent
@@ -91,7 +89,6 @@ describe('Endpoint', () => {
 		endpoint.listen('two', {
 			knownPeers: new Map(),
 			onMessage: jest.fn(),
-			onError: jest.fn(),
 		});
 
 		expect(() => {
@@ -134,7 +131,6 @@ describe('Endpoint', () => {
 		endpoint.listen('two', {
 			knownPeers,
 			onMessage: jest.fn(),
-			onError: jest.fn(),
 		});
 
 		// 2. sending handshake from 'two' to 'one'
@@ -199,7 +195,6 @@ describe('Endpoint', () => {
 		one.listen('two', {
 			knownPeers: new Map(),
 			onMessage: jest.fn(),
-			onError: jest.fn(),
 		});
 
 		// simulating handshake from 'two' to 'one'

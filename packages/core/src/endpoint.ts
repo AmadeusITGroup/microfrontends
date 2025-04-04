@@ -1,6 +1,5 @@
 import type { HandshakeMessage, Message, RoutedMessage, ServiceMessage } from './message';
 import { checkMessageHasCorrectStructure, checkOriginIsValid, logger } from './utils';
-import { MessageError } from './message-error';
 import { LocalMessageChannel } from './local-message-channel';
 
 // registering a custom event for handshake messages
@@ -16,7 +15,6 @@ declare global {
 export interface EndpointConnectionOptions<M extends Message> {
 	knownPeers: Map<string, Message[]>;
 	onMessage?: (message: RoutedMessage<M>) => void;
-	onError?: (error: MessageError) => void;
 	window?: Window;
 	origin?: string;
 }
@@ -62,7 +60,6 @@ export class Endpoint<M extends Message> implements EndpointType<M> {
 
 	// message processing
 	#onMessage: EndpointConnectionOptions<M>['onMessage'] | null = null;
-	#onError: EndpointConnectionOptions<M>['onError'] | null = null;
 
 	constructor(public readonly id: string) {}
 
@@ -116,7 +113,7 @@ export class Endpoint<M extends Message> implements EndpointType<M> {
 									`EP(${this.id}): '${payload.type}' message received from '${this.#remoteId ?? '?'}':`,
 									message,
 								);
-								this.#processMessage(message);
+								this.#onMessage?.(message);
 							};
 
 							const handshake = this.#createHandshakeMessage(endpointId, options.knownPeers);
@@ -168,7 +165,7 @@ export class Endpoint<M extends Message> implements EndpointType<M> {
 
 					// Connected
 					if (this.#connected) {
-						this.#processMessage(message);
+						this.#onMessage?.(message);
 					}
 
 					// Not connected yet, expecting handshake
@@ -221,7 +218,6 @@ export class Endpoint<M extends Message> implements EndpointType<M> {
 	public disconnect(): void {
 		this.#remoteId = null;
 		this.#onMessage = null;
-		this.#onError = null;
 		this.#connection = null;
 		this.#connected = false;
 		this.#port?.close();
@@ -261,7 +257,6 @@ export class Endpoint<M extends Message> implements EndpointType<M> {
 
 		// messageHandling
 		this.#onMessage = options?.onMessage;
-		this.#onError = options?.onError || ((error) => console.warn(error));
 
 		return { hostOrigin, hostWindow };
 	}
@@ -281,24 +276,6 @@ export class Endpoint<M extends Message> implements EndpointType<M> {
 				knownPeers: new Map(knownPeers),
 			},
 		};
-	}
-
-	#processMessage(message: RoutedMessage<M>) {
-		// TODO: maybe just do all this at the peer level?
-		try {
-			// validating incoming message structure
-			checkMessageHasCorrectStructure(message);
-
-			if (message.payload.type === 'handshake') {
-				// TODO: what if we receive handshake, throw error ?
-				console.warn(`EP(${this.id}): Unexpected handshake message received:`, message);
-			} else {
-				this.#onMessage?.(message);
-			}
-		} catch (error) {
-			logger(`EP(${this.id}):`, error);
-			this.#onError?.(error as MessageError);
-		}
 	}
 
 	#sendQueuedMessages(): void {
