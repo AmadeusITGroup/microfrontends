@@ -1187,6 +1187,15 @@ describe('Peer', () => {
 		expect(messages).toEqual([{ type: 'known', version: '1.0' }]);
 	});
 
+	test(`should reuse the same connection when '.listen()' multiple times`, () => {
+		const one = new MessagePeer({ id: 'one' });
+
+		const promise1 = one.listen('two');
+		const promise2 = one.listen('two');
+
+		expect(promise1 === promise2).toBe(true);
+	});
+
 	test(`should respect 'default' message check strategy`, () => {
 		const one = new MessagePeer({ id: 'one' });
 		const two = new MessagePeer({ id: 'two' });

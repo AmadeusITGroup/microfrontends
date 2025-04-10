@@ -261,8 +261,12 @@ export class MessagePeer<M extends Message> implements MessagePeerType<M> {
 	 */
 	public listen(peerId: string, options?: PeerConnectionOptions) {
 		logger(`PEER(${this.id}): listening for '${peerId}'`);
-		const endpoint = new Endpoint<M>(this.id);
-		this.#endpoints.set(peerId, endpoint);
+
+		let endpoint = this.#endpoints.get(peerId);
+		if (!endpoint) {
+			endpoint = new Endpoint<M>(this.id);
+			this.#endpoints.set(peerId, endpoint);
+		}
 
 		return endpoint.listen(peerId, {
 			...DEFAULT_START_OPTIONS,
