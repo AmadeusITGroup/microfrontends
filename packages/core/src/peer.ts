@@ -570,7 +570,10 @@ export class MessagePeer<M extends Message> implements MessagePeerType<M> {
 			for (const endpoint of this.#endpoints.values()) {
 				endpoint.send(message);
 			}
-		} else {
+		}
+		// queueing only user messages, ex. no need to queue 'connect'/'disconnect'/'error' messages
+		// all the necessary data will be passed in the initial 'connect' message for new peers
+		else if (!isServiceMessage(payload)) {
 			this.#messageQueue.push(message);
 		}
 	}

@@ -1278,4 +1278,31 @@ describe('Peer', () => {
 			`Message should have 'payload' property that has 'version'(string) defined`,
 		]);
 	});
+
+	test(`should not queue a 'disconnect' message if nobody is connected`, () => {
+		const one = createPeer('one');
+		const two = createPeer('two');
+
+		one.listen('two');
+		one.disconnect('two'); // should not schedule a disconnect message
+		one.listen('two');
+		two.connect('one');
+
+		expectMessages(onMessage, [
+			{
+				one: {
+					from: 'two',
+					to: ['one'],
+					payload: { type: 'connect', version: '1.0', knownPeers: [], connected: ['two'] },
+				},
+			},
+			{
+				two: {
+					from: 'one',
+					to: ['two'],
+					payload: { type: 'connect', version: '1.0', knownPeers: [], connected: ['one'] },
+				},
+			},
+		]);
+	});
 });
