@@ -110,7 +110,7 @@ export class Endpoint<M extends Message> implements EndpointType<M> {
 							this.#port.onmessage = (event: MessageEvent<RoutedMessage<M>>) => {
 								const message = event.data;
 								logger(
-									`EP(${this.id}): '${payload.type}' message received from '${this.#remoteId ?? '?'}':`,
+									`EP(${this.id}): '${message.payload.type}' message received from '${this.#remoteId ?? '?'}':`,
 									message,
 								);
 								this.#onMessage?.(message);
