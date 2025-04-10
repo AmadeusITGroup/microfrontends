@@ -1,7 +1,7 @@
 {
 	"name": "@amadeus-it-group/microfrontends",
 	"description": "Amadeus Micro Frontend Toolkit",
-	"version": "0.0.5",
+	"version": "0.0.6",
 	"license": "MIT",
 	"homepage": "https://github.com/AmadeusITGroup/microfrontends",
 	"repository": {

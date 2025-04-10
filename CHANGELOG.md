@@ -1,3 +1,44 @@
+# [0.0.6](https://github.com/AmadeusITGroup/microfrontends/compare/0.0.5...0.0.6) (2025-04-10)
+
+Relaxes `Message` type to make `version` optional. This allows to send messages without versioning by default.
+
+Introduces the ability to configure how messages are validated with `messageCheckStragegy` option:
+
+```ts
+const peer = new MessagePeer({
+  id: 'one',
+  messsageCheckStrategy: 'version',
+});
+```
+
+Check strategy can be one of `default` | `type` | `version`. By default, only the message structure is checked, with `type` it is checked that the message type is known to the peer upn reception, with `version` it is checked that the message type is known to the peer and the version is compatible with the peer.
+
+With `default` check strategy, the `knownMessages` becomes optional.
+
+### Features
+
+- Make `version` optional in the `Message` interface ([d7d671b](https://github.com/AmadeusITGroup/microfrontends/commit/d7d671b6c8c5d576ca850f210f2eb7a26fffd39b))
+- Allow changing how messages are checked upon reception ([1175331](https://github.com/AmadeusITGroup/microfrontends/commit/11753319cfc64a70ec5e80dba8c0c60367eaff3f))
+
+### Fixes
+
+- Handle calling `.connect()` twice correctly ([2fca710](https://github.com/AmadeusITGroup/microfrontends/commit/2fca710b1663d379e49fea297c4c4991aaa9cabc))
+- Handle calling `.listen()` twice correctly ([c76367f](https://github.com/AmadeusITGroup/microfrontends/commit/c76367fe60687ab42c908caf282acd795b8656b2))
+- Don't queue service messages like `disconnect` at peer level ([3ba12a8](https://github.com/AmadeusITGroup/microfrontends/commit/3ba12a85d9472c94d447bae517966a5d3586f27d))
+
+### BREAKING CHANGES
+
+- You might want to use `Required<Message>` instead of `Message` if you want to ensure `version` is mandatory for your message handling.
+- By default, message version and type checks are optional. Previous behaviour can be restored by setting `messageCheckStrategy` to `version`:
+
+```ts
+const peer = new MessagePeer({
+  id: 'one',
+  messageCheckStrategy: 'version',
+  knownMessages: [],
+});
+```
+
 # [0.0.5](https://github.com/AmadeusITGroup/microfrontends/compare/0.0.4...0.0.5) (2025-04-03)
 
 New `.messages`, `.serviceMessages` and `.errors` API that make it easier to dissociate peer creation with and places where messages might be consumed. It uses `Obsevable` and `rxjs` compatible implementation for streams of messages.
