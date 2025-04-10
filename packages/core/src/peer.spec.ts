@@ -1196,6 +1196,15 @@ describe('Peer', () => {
 		expect(promise1 === promise2).toBe(true);
 	});
 
+	test(`should reuse the same connection when '.connect()' multiple times`, () => {
+		const two = new MessagePeer({ id: 'two' });
+
+		const promise1 = two.connect('one');
+		const promise2 = two.connect('one');
+
+		expect(promise1 === promise2).toBe(true);
+	});
+
 	test(`should respect 'default' message check strategy`, () => {
 		const one = new MessagePeer({ id: 'one' });
 		const two = new MessagePeer({ id: 'two' });
