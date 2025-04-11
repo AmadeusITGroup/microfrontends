@@ -1,3 +1,9 @@
+# [0.0.7](https://github.com/AmadeusITGroup/microfrontends/compare/0.0.6...0.0.7) (2025-04-11)
+
+### Features
+
+- Export `VersionedMessage` type ([ac60200](https://github.com/AmadeusITGroup/microfrontends/commit/ac6020030e6b4cb66bf2aa205c20dcb897f2077d))
+
 # [0.0.6](https://github.com/AmadeusITGroup/microfrontends/compare/0.0.5...0.0.6) (2025-04-10)
 
 Relaxes `Message` type to make `version` optional. This allows to send messages without versioning by default.
