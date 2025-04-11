@@ -14,6 +14,16 @@ export interface Message {
 }
 
 /**
+ * A versioned message
+ */
+export interface VersionedMessage extends Message {
+	/**
+	 * @inheritDoc
+	 */
+	version: string;
+}
+
+/**
  * A functional message wrapper that contains the message payload and the sender and receiver ids.
  * It is used to route messages between peers.
  */

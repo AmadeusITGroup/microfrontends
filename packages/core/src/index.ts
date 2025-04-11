@@ -5,6 +5,7 @@ export type {
 	RoutedMessage,
 	DeclareMessages,
 	ServiceMessage,
+	VersionedMessage,
 } from './message';
 export { isServiceMessage } from './message';
 export { MessagePeer } from './peer';
