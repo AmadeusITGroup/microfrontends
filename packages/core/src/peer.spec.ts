@@ -126,14 +126,14 @@ describe('Peer', () => {
 				one: {
 					from: 'two',
 					to: ['one'],
-					payload: { type: 'connect', version: '1.0', knownPeers: [], connected: ['two'] },
+					payload: { type: 'connect', version: '1.0', knownPeers: new Map(), connected: ['two'] },
 				},
 			},
 			{
 				two: {
 					from: 'one',
 					to: ['two'],
-					payload: { type: 'connect', version: '1.0', knownPeers: [], connected: ['one'] },
+					payload: { type: 'connect', version: '1.0', knownPeers: new Map(), connected: ['one'] },
 				},
 			},
 			{ two: { from: 'one', to: [], payload: { type: 'known', version: '1.0' } } },
@@ -166,14 +166,14 @@ describe('Peer', () => {
 				one: {
 					from: 'two',
 					to: ['one'],
-					payload: { type: 'connect', version: '1.0', knownPeers: [], connected: ['two'] },
+					payload: { type: 'connect', version: '1.0', knownPeers: new Map(), connected: ['two'] },
 				},
 			},
 			{
 				two: {
 					from: 'one',
 					to: ['two'],
-					payload: { type: 'connect', version: '1.0', knownPeers: [], connected: ['one'] },
+					payload: { type: 'connect', version: '1.0', knownPeers: new Map(), connected: ['one'] },
 				},
 			},
 			{
@@ -187,14 +187,23 @@ describe('Peer', () => {
 				two: {
 					from: 'one',
 					to: [],
-					payload: { type: 'connect', version: '1.0', knownPeers: [], connected: ['three'] },
+					payload: {
+						type: 'connect',
+						version: '1.0',
+						knownPeers: new Map([
+							['one', [{ type: 'known', version: '1.0' }]],
+							['two', [{ type: 'known', version: '1.0' }]],
+							['three', [{ type: 'known', version: '1.0' }]],
+						]),
+						connected: ['three'],
+					},
 				},
 			},
 			{
 				one: {
 					from: 'three',
 					to: ['one'],
-					payload: { type: 'connect', version: '1.0', knownPeers: [], connected: ['three'] },
+					payload: { type: 'connect', version: '1.0', knownPeers: new Map(), connected: ['three'] },
 				},
 			},
 			{
@@ -215,7 +224,12 @@ describe('Peer', () => {
 				three: {
 					from: 'one',
 					to: ['three'],
-					payload: { type: 'connect', version: '1.0', knownPeers: [], connected: ['one', 'two'] },
+					payload: {
+						type: 'connect',
+						version: '1.0',
+						knownPeers: new Map(),
+						connected: ['one', 'two'],
+					},
 				},
 			},
 			{
@@ -245,14 +259,14 @@ describe('Peer', () => {
 				one: {
 					from: 'two',
 					to: ['one'],
-					payload: { type: 'connect', version: '1.0', knownPeers: [], connected: ['two'] },
+					payload: { type: 'connect', version: '1.0', knownPeers: new Map(), connected: ['two'] },
 				},
 			},
 			{
 				two: {
 					from: 'one',
 					to: ['two'],
-					payload: { type: 'connect', version: '1.0', knownPeers: [], connected: ['one'] },
+					payload: { type: 'connect', version: '1.0', knownPeers: new Map(), connected: ['one'] },
 				},
 			},
 			{
@@ -322,35 +336,49 @@ describe('Peer', () => {
 				one: {
 					from: 'two',
 					to: ['one'],
-					payload: { type: 'connect', version: '1.0', knownPeers: [], connected: ['two'] },
+					payload: { type: 'connect', version: '1.0', knownPeers: new Map(), connected: ['two'] },
 				},
 			},
 			{
 				two: {
 					from: 'one',
 					to: ['two'],
-					payload: { type: 'connect', version: '1.0', knownPeers: [], connected: ['one'] },
+					payload: { type: 'connect', version: '1.0', knownPeers: new Map(), connected: ['one'] },
 				},
 			},
 			{
 				two: {
 					from: 'one',
 					to: [],
-					payload: { type: 'connect', version: '1.0', knownPeers: [], connected: ['three'] },
+					payload: {
+						type: 'connect',
+						version: '1.0',
+						knownPeers: new Map([
+							['one', [{ type: 'known', version: '1.0' }]],
+							['two', [{ type: 'known', version: '1.0' }]],
+							['three', [{ type: 'known', version: '1.0' }]],
+						]),
+						connected: ['three'],
+					},
 				},
 			},
 			{
 				one: {
 					from: 'three',
 					to: ['one'],
-					payload: { type: 'connect', version: '1.0', knownPeers: [], connected: ['three'] },
+					payload: { type: 'connect', version: '1.0', knownPeers: new Map(), connected: ['three'] },
 				},
 			},
 			{
 				three: {
 					from: 'one',
 					to: ['three'],
-					payload: { type: 'connect', version: '1.0', knownPeers: [], connected: ['one', 'two'] },
+					payload: {
+						type: 'connect',
+						version: '1.0',
+						knownPeers: new Map(),
+						connected: ['one', 'two'],
+					},
 				},
 			},
 			{ two: { from: 'one', to: [], payload: { type: 'known', version: '1.0' } } },
@@ -369,6 +397,7 @@ describe('Peer', () => {
 		one.listen('three');
 		two.connect('one');
 		three.connect('one');
+		two.send({ type: 'known', version: '1.0' }, { to: ['three'] });
 		one.send({ type: 'known', version: '1.0' }, { to: ['three'] });
 
 		expectMessages(onMessage, [
@@ -376,37 +405,52 @@ describe('Peer', () => {
 				one: {
 					from: 'two',
 					to: ['one'],
-					payload: { type: 'connect', version: '1.0', knownPeers: [], connected: ['two'] },
+					payload: { type: 'connect', version: '1.0', knownPeers: new Map(), connected: ['two'] },
 				},
 			},
 			{
 				two: {
 					from: 'one',
 					to: ['two'],
-					payload: { type: 'connect', version: '1.0', knownPeers: [], connected: ['one'] },
+					payload: { type: 'connect', version: '1.0', knownPeers: new Map(), connected: ['one'] },
 				},
 			},
 			{
 				two: {
 					from: 'one',
 					to: [],
-					payload: { type: 'connect', version: '1.0', knownPeers: [], connected: ['three'] },
+					payload: {
+						type: 'connect',
+						version: '1.0',
+						knownPeers: new Map([
+							['one', [{ type: 'known', version: '1.0' }]],
+							['two', [{ type: 'known', version: '1.0' }]],
+							['three', [{ type: 'known', version: '1.0' }]],
+						]),
+						connected: ['three'],
+					},
 				},
 			},
 			{
 				one: {
 					from: 'three',
 					to: ['one'],
-					payload: { type: 'connect', version: '1.0', knownPeers: [], connected: ['three'] },
+					payload: { type: 'connect', version: '1.0', knownPeers: new Map(), connected: ['three'] },
 				},
 			},
 			{
 				three: {
 					from: 'one',
 					to: ['three'],
-					payload: { type: 'connect', version: '1.0', knownPeers: [], connected: ['one', 'two'] },
+					payload: {
+						type: 'connect',
+						version: '1.0',
+						knownPeers: new Map(),
+						connected: ['one', 'two'],
+					},
 				},
 			},
+			{ three: { from: 'two', to: ['three'], payload: { type: 'known', version: '1.0' } } },
 			{ three: { from: 'one', to: ['three'], payload: { type: 'known', version: '1.0' } } },
 		]);
 		expectErrors(onError, []);
@@ -492,35 +536,49 @@ describe('Peer', () => {
 				one: {
 					from: 'two',
 					to: ['one'],
-					payload: { type: 'connect', version: '1.0', knownPeers: [], connected: ['two'] },
+					payload: { type: 'connect', version: '1.0', knownPeers: new Map(), connected: ['two'] },
 				},
 			},
 			{
 				two: {
 					from: 'one',
 					to: ['two'],
-					payload: { type: 'connect', version: '1.0', knownPeers: [], connected: ['one'] },
+					payload: { type: 'connect', version: '1.0', knownPeers: new Map(), connected: ['one'] },
 				},
 			},
 			{
 				one: {
 					from: 'two',
 					to: [],
-					payload: { type: 'connect', version: '1.0', knownPeers: [], connected: ['three'] },
+					payload: {
+						type: 'connect',
+						version: '1.0',
+						knownPeers: new Map([
+							['one', [{ type: 'known', version: '1.0' }]],
+							['two', [{ type: 'known', version: '1.0' }]],
+							['three', [{ type: 'three-only', version: '1.0' }]],
+						]),
+						connected: ['three'],
+					},
 				},
 			},
 			{
 				two: {
 					from: 'three',
 					to: ['two'],
-					payload: { type: 'connect', version: '1.0', knownPeers: [], connected: ['three'] },
+					payload: { type: 'connect', version: '1.0', knownPeers: new Map(), connected: ['three'] },
 				},
 			},
 			{
 				three: {
 					from: 'two',
 					to: ['three'],
-					payload: { type: 'connect', version: '1.0', knownPeers: [], connected: ['two', 'one'] },
+					payload: {
+						type: 'connect',
+						version: '1.0',
+						knownPeers: new Map(),
+						connected: ['two', 'one'],
+					},
 				},
 			},
 		]);
@@ -548,35 +606,49 @@ describe('Peer', () => {
 				one: {
 					from: 'two',
 					to: ['one'],
-					payload: { type: 'connect', version: '1.0', knownPeers: [], connected: ['two'] },
+					payload: { type: 'connect', version: '1.0', knownPeers: new Map(), connected: ['two'] },
 				},
 			},
 			{
 				two: {
 					from: 'one',
 					to: ['two'],
-					payload: { type: 'connect', version: '1.0', knownPeers: [], connected: ['one'] },
+					payload: { type: 'connect', version: '1.0', knownPeers: new Map(), connected: ['one'] },
 				},
 			},
 			{
 				one: {
 					from: 'two',
 					to: [],
-					payload: { type: 'connect', version: '1.0', knownPeers: [], connected: ['three'] },
+					payload: {
+						type: 'connect',
+						version: '1.0',
+						knownPeers: new Map([
+							['one', [{ type: 'known', version: '1.0' }]],
+							['two', [{ type: 'known', version: '1.0' }]],
+							['three', [{ type: 'three-only', version: '1.0' }]],
+						]),
+						connected: ['three'],
+					},
 				},
 			},
 			{
 				two: {
 					from: 'three',
 					to: ['two'],
-					payload: { type: 'connect', version: '1.0', knownPeers: [], connected: ['three'] },
+					payload: { type: 'connect', version: '1.0', knownPeers: new Map(), connected: ['three'] },
 				},
 			},
 			{
 				three: {
 					from: 'two',
 					to: ['three'],
-					payload: { type: 'connect', version: '1.0', knownPeers: [], connected: ['two', 'one'] },
+					payload: {
+						type: 'connect',
+						version: '1.0',
+						knownPeers: new Map(),
+						connected: ['two', 'one'],
+					},
 				},
 			},
 			{ three: { from: 'one', to: ['three'], payload: { type: 'three-only', version: '1.0' } } },
@@ -699,14 +771,14 @@ describe('Peer', () => {
 				two: {
 					from: 'three',
 					to: ['two'],
-					payload: { type: 'connect', version: '1.0', knownPeers: [], connected: ['three'] },
+					payload: { type: 'connect', version: '1.0', knownPeers: new Map(), connected: ['three'] },
 				},
 			},
 			{
 				three: {
 					from: 'two',
 					to: ['three'],
-					payload: { type: 'connect', version: '1.0', knownPeers: [], connected: ['two'] },
+					payload: { type: 'connect', version: '1.0', knownPeers: new Map(), connected: ['two'] },
 				},
 			},
 			// 1-2
@@ -714,21 +786,35 @@ describe('Peer', () => {
 				three: {
 					from: 'two',
 					to: [],
-					payload: { type: 'connect', version: '1.0', knownPeers: [], connected: ['one'] },
+					payload: {
+						type: 'connect',
+						version: '1.0',
+						knownPeers: new Map([
+							['one', [{ type: 'known', version: '1.0' }]],
+							['two', [{ type: 'known', version: '1.0' }]],
+							['three', [{ type: 'known', version: '1.0' }]],
+						]),
+						connected: ['one'],
+					},
 				},
 			},
 			{
 				one: {
 					from: 'two',
 					to: ['one'],
-					payload: { type: 'connect', version: '1.0', knownPeers: [], connected: ['two', 'three'] },
+					payload: {
+						type: 'connect',
+						version: '1.0',
+						knownPeers: new Map(),
+						connected: ['two', 'three'],
+					},
 				},
 			},
 			{
 				two: {
 					from: 'one',
 					to: ['two'],
-					payload: { type: 'connect', version: '1.0', knownPeers: [], connected: ['one'] },
+					payload: { type: 'connect', version: '1.0', knownPeers: new Map(), connected: ['one'] },
 				},
 			},
 			// 3-4
@@ -736,21 +822,41 @@ describe('Peer', () => {
 				two: {
 					from: 'three',
 					to: [],
-					payload: { type: 'connect', version: '1.0', knownPeers: [], connected: ['four'] },
+					payload: {
+						type: 'connect',
+						version: '1.0',
+						knownPeers: new Map([
+							['three', [{ type: 'known', version: '1.0' }]],
+							['two', [{ type: 'known', version: '1.0' }]],
+							['one', [{ type: 'known', version: '1.0' }]],
+							['four', [{ type: 'known', version: '1.0' }]],
+						]),
+						connected: ['four'],
+					},
 				},
 			},
 			{
 				one: {
 					from: 'three',
 					to: [],
-					payload: { type: 'connect', version: '1.0', knownPeers: [], connected: ['four'] },
+					payload: {
+						type: 'connect',
+						version: '1.0',
+						knownPeers: new Map([
+							['three', [{ type: 'known', version: '1.0' }]],
+							['two', [{ type: 'known', version: '1.0' }]],
+							['one', [{ type: 'known', version: '1.0' }]],
+							['four', [{ type: 'known', version: '1.0' }]],
+						]),
+						connected: ['four'],
+					},
 				},
 			},
 			{
 				three: {
 					from: 'four',
 					to: ['three'],
-					payload: { type: 'connect', version: '1.0', knownPeers: [], connected: ['four'] },
+					payload: { type: 'connect', version: '1.0', knownPeers: new Map(), connected: ['four'] },
 				},
 			},
 			{
@@ -760,7 +866,7 @@ describe('Peer', () => {
 					payload: {
 						type: 'connect',
 						version: '1.0',
-						knownPeers: [],
+						knownPeers: new Map(),
 						connected: ['three', 'two', 'one'],
 					},
 				},
@@ -812,7 +918,12 @@ describe('Peer', () => {
 					payload: {
 						type: 'connect',
 						version: '1.0',
-						knownPeers: [],
+						knownPeers: new Map([
+							['one', [{ type: 'known', version: '1.0' }]],
+							['two', [{ type: 'known', version: '1.0' }]],
+							['three', [{ type: 'known', version: '1.0' }]],
+							['four', [{ type: 'known', version: '1.0' }]],
+						]),
 						connected: ['three', 'four'],
 					},
 				},
@@ -821,7 +932,17 @@ describe('Peer', () => {
 				four: {
 					from: 'three',
 					to: [],
-					payload: { type: 'connect', version: '1.0', knownPeers: [], connected: ['two', 'one'] },
+					payload: {
+						type: 'connect',
+						version: '1.0',
+						knownPeers: new Map([
+							['one', [{ type: 'known', version: '1.0' }]],
+							['two', [{ type: 'known', version: '1.0' }]],
+							['three', [{ type: 'known', version: '1.0' }]],
+							['four', [{ type: 'known', version: '1.0' }]],
+						]),
+						connected: ['two', 'one'],
+					},
 				},
 			},
 			{
@@ -831,7 +952,7 @@ describe('Peer', () => {
 					payload: {
 						type: 'connect',
 						version: '1.0',
-						knownPeers: [],
+						knownPeers: new Map(),
 						connected: ['three', 'four'],
 					},
 				},
@@ -840,7 +961,12 @@ describe('Peer', () => {
 				three: {
 					from: 'two',
 					to: ['three'],
-					payload: { type: 'connect', version: '1.0', knownPeers: [], connected: ['two', 'one'] },
+					payload: {
+						type: 'connect',
+						version: '1.0',
+						knownPeers: new Map(),
+						connected: ['two', 'one'],
+					},
 				},
 			},
 			//
@@ -1009,35 +1135,49 @@ describe('Peer', () => {
 				one: {
 					from: 'two',
 					to: ['one'],
-					payload: { type: 'connect', version: '1.0', knownPeers: [], connected: ['two'] },
+					payload: { type: 'connect', version: '1.0', knownPeers: new Map(), connected: ['two'] },
 				},
 			},
 			{
 				two: {
 					from: 'one',
 					to: ['two'],
-					payload: { type: 'connect', version: '1.0', knownPeers: [], connected: ['one'] },
+					payload: { type: 'connect', version: '1.0', knownPeers: new Map(), connected: ['one'] },
 				},
 			},
 			{
 				one: {
 					from: 'two',
 					to: [],
-					payload: { type: 'connect', version: '1.0', knownPeers: [], connected: ['three'] },
+					payload: {
+						type: 'connect',
+						version: '1.0',
+						knownPeers: new Map([
+							['one', []],
+							['two', []],
+							['three', [{ type: 'known', version: '1.0' }]],
+						]),
+						connected: ['three'],
+					},
 				},
 			},
 			{
 				two: {
 					from: 'three',
 					to: ['two'],
-					payload: { type: 'connect', version: '1.0', knownPeers: [], connected: ['three'] },
+					payload: { type: 'connect', version: '1.0', knownPeers: new Map(), connected: ['three'] },
 				},
 			},
 			{
 				three: {
 					from: 'two',
 					to: ['three'],
-					payload: { type: 'connect', version: '1.0', knownPeers: [], connected: ['two', 'one'] },
+					payload: {
+						type: 'connect',
+						version: '1.0',
+						knownPeers: new Map(),
+						connected: ['two', 'one'],
+					},
 				},
 			},
 			{
@@ -1143,10 +1283,10 @@ describe('Peer', () => {
 		two.connect('one');
 
 		expect(oneMessages).toEqual([
-			{ type: 'connect', version: '1.0', connected: ['two'], knownPeers: [] },
+			{ type: 'connect', version: '1.0', connected: ['two'], knownPeers: new Map() },
 		]);
 		expect(twoMessages).toEqual([
-			{ type: 'connect', version: '1.0', connected: ['one'], knownPeers: [] },
+			{ type: 'connect', version: '1.0', connected: ['one'], knownPeers: new Map() },
 		]);
 	});
 
@@ -1302,14 +1442,14 @@ describe('Peer', () => {
 				one: {
 					from: 'two',
 					to: ['one'],
-					payload: { type: 'connect', version: '1.0', knownPeers: [], connected: ['two'] },
+					payload: { type: 'connect', version: '1.0', knownPeers: new Map(), connected: ['two'] },
 				},
 			},
 			{
 				two: {
 					from: 'one',
 					to: ['two'],
-					payload: { type: 'connect', version: '1.0', knownPeers: [], connected: ['one'] },
+					payload: { type: 'connect', version: '1.0', knownPeers: new Map(), connected: ['one'] },
 				},
 			},
 		]);

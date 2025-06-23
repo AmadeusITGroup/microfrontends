@@ -474,10 +474,7 @@ export class MessagePeer<M extends Message> implements MessagePeerType<M> {
 						this.#sendQueuedMessages();
 
 						// 3. passing the message to the user
-						this.#serviceMessageEmitter.emit({
-							...message,
-							payload: { ...payload, knownPeers: [] },
-						} as any);
+						this.#serviceMessageEmitter.emit(message as any);
 					}
 					this.#forwardMessage(endpoint, message);
 					break;
