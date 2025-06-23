@@ -59,6 +59,41 @@ describe('Peer', () => {
 		return peer;
 	}
 
+	function clearMessages() {
+		onMessage.mockClear();
+	}
+
+	function createPeerChain() {
+		const one = createPeer('one');
+		const two = createPeer('two');
+		const three = createPeer('three');
+		const four = createPeer('four');
+
+		// 1-2, 2-3, 3-4
+		one.listen('two');
+		two.listen('three');
+		three.listen('four');
+		three.connect('two');
+		two.connect('one');
+		four.connect('three');
+
+		return [one, two, three, four];
+	}
+
+	function createPeerTree() {
+		const one = createPeer('one');
+		const two = createPeer('two');
+		const three = createPeer('three');
+
+		// 1-2, 1-3
+		one.listen('two');
+		one.listen('three');
+		two.connect('one');
+		three.connect('one');
+
+		return [one, two, three];
+	}
+
 	beforeEach(() => {
 		onMessage = jest.fn();
 		onError = jest.fn();
@@ -66,6 +101,212 @@ describe('Peer', () => {
 
 	afterEach(() => {
 		handshakeListeners.clear();
+	});
+
+	describe('test use cases', () => {
+		test(`should create 1-2 1-3 tree`, () => {
+			const [one, two, three] = createPeerTree();
+
+			for (const peer of [one, two, three]) {
+				expect(peer.knownPeers).toEqual(
+					new Map([
+						['one', knownMessages],
+						['two', knownMessages],
+						['three', knownMessages],
+					]),
+				);
+			}
+
+			expectMessages(onMessage, [
+				{
+					one: {
+						from: 'two',
+						to: ['one'],
+						payload: { type: 'connect', version: '1.0', knownPeers: new Map(), connected: ['two'] },
+					},
+				},
+				{
+					two: {
+						from: 'one',
+						to: ['two'],
+						payload: { type: 'connect', version: '1.0', knownPeers: new Map(), connected: ['one'] },
+					},
+				},
+				{
+					two: {
+						from: 'one',
+						to: [],
+						payload: {
+							type: 'connect',
+							version: '1.0',
+							knownPeers: new Map([
+								['one', [{ type: 'known', version: '1.0' }]],
+								['two', [{ type: 'known', version: '1.0' }]],
+								['three', [{ type: 'known', version: '1.0' }]],
+							]),
+							connected: ['three'],
+						},
+					},
+				},
+				{
+					one: {
+						from: 'three',
+						to: ['one'],
+						payload: {
+							type: 'connect',
+							version: '1.0',
+							knownPeers: new Map(),
+							connected: ['three'],
+						},
+					},
+				},
+				{
+					three: {
+						from: 'one',
+						to: ['three'],
+						payload: {
+							type: 'connect',
+							version: '1.0',
+							knownPeers: new Map(),
+							connected: ['one', 'two'],
+						},
+					},
+				},
+			]);
+		});
+
+		test(`should create 1-2 2-3 3-4 chain`, () => {
+			const [one, two, three, four] = createPeerChain();
+
+			for (const peer of [one, two, three, four]) {
+				expect(peer.knownPeers).toEqual(
+					new Map([
+						['one', knownMessages],
+						['two', knownMessages],
+						['three', knownMessages],
+						['four', knownMessages],
+					]),
+				);
+			}
+
+			expectMessages(onMessage, [
+				// 2-3
+				{
+					two: {
+						from: 'three',
+						to: ['two'],
+						payload: {
+							type: 'connect',
+							version: '1.0',
+							knownPeers: new Map(),
+							connected: ['three'],
+						},
+					},
+				},
+				{
+					three: {
+						from: 'two',
+						to: ['three'],
+						payload: { type: 'connect', version: '1.0', knownPeers: new Map(), connected: ['two'] },
+					},
+				},
+				// 1-2
+				{
+					three: {
+						from: 'two',
+						to: [],
+						payload: {
+							type: 'connect',
+							version: '1.0',
+							knownPeers: new Map([
+								['one', [{ type: 'known', version: '1.0' }]],
+								['two', [{ type: 'known', version: '1.0' }]],
+								['three', [{ type: 'known', version: '1.0' }]],
+							]),
+							connected: ['one'],
+						},
+					},
+				},
+				{
+					one: {
+						from: 'two',
+						to: ['one'],
+						payload: {
+							type: 'connect',
+							version: '1.0',
+							knownPeers: new Map(),
+							connected: ['two', 'three'],
+						},
+					},
+				},
+				{
+					two: {
+						from: 'one',
+						to: ['two'],
+						payload: { type: 'connect', version: '1.0', knownPeers: new Map(), connected: ['one'] },
+					},
+				},
+				// 3-4
+				{
+					two: {
+						from: 'three',
+						to: [],
+						payload: {
+							type: 'connect',
+							version: '1.0',
+							knownPeers: new Map([
+								['three', [{ type: 'known', version: '1.0' }]],
+								['two', [{ type: 'known', version: '1.0' }]],
+								['one', [{ type: 'known', version: '1.0' }]],
+								['four', [{ type: 'known', version: '1.0' }]],
+							]),
+							connected: ['four'],
+						},
+					},
+				},
+				{
+					one: {
+						from: 'three',
+						to: [],
+						payload: {
+							type: 'connect',
+							version: '1.0',
+							knownPeers: new Map([
+								['three', [{ type: 'known', version: '1.0' }]],
+								['two', [{ type: 'known', version: '1.0' }]],
+								['one', [{ type: 'known', version: '1.0' }]],
+								['four', [{ type: 'known', version: '1.0' }]],
+							]),
+							connected: ['four'],
+						},
+					},
+				},
+				{
+					three: {
+						from: 'four',
+						to: ['three'],
+						payload: {
+							type: 'connect',
+							version: '1.0',
+							knownPeers: new Map(),
+							connected: ['four'],
+						},
+					},
+				},
+				{
+					four: {
+						from: 'three',
+						to: ['four'],
+						payload: {
+							type: 'connect',
+							version: '1.0',
+							knownPeers: new Map(),
+							connected: ['three', 'two', 'one'],
+						},
+					},
+				},
+			]);
+		});
 	});
 
 	test(`should be created with reasonable defaults`, () => {
@@ -320,67 +561,13 @@ describe('Peer', () => {
 	});
 
 	test(`send() should broadcast messages`, () => {
-		const one = createPeer('one');
-		const two = createPeer('two');
-		const three = createPeer('three');
+		const [one] = createPeerTree();
+		clearMessages();
 
 		// 1-2, 1-3
-		one.listen('two');
-		one.listen('three');
-		two.connect('one');
-		three.connect('one');
 		one.send({ type: 'known', version: '1.0' });
 
 		expectMessages(onMessage, [
-			{
-				one: {
-					from: 'two',
-					to: ['one'],
-					payload: { type: 'connect', version: '1.0', knownPeers: new Map(), connected: ['two'] },
-				},
-			},
-			{
-				two: {
-					from: 'one',
-					to: ['two'],
-					payload: { type: 'connect', version: '1.0', knownPeers: new Map(), connected: ['one'] },
-				},
-			},
-			{
-				two: {
-					from: 'one',
-					to: [],
-					payload: {
-						type: 'connect',
-						version: '1.0',
-						knownPeers: new Map([
-							['one', [{ type: 'known', version: '1.0' }]],
-							['two', [{ type: 'known', version: '1.0' }]],
-							['three', [{ type: 'known', version: '1.0' }]],
-						]),
-						connected: ['three'],
-					},
-				},
-			},
-			{
-				one: {
-					from: 'three',
-					to: ['one'],
-					payload: { type: 'connect', version: '1.0', knownPeers: new Map(), connected: ['three'] },
-				},
-			},
-			{
-				three: {
-					from: 'one',
-					to: ['three'],
-					payload: {
-						type: 'connect',
-						version: '1.0',
-						knownPeers: new Map(),
-						connected: ['one', 'two'],
-					},
-				},
-			},
 			{ two: { from: 'one', to: [], payload: { type: 'known', version: '1.0' } } },
 			{ three: { from: 'one', to: [], payload: { type: 'known', version: '1.0' } } },
 		]);
@@ -388,68 +575,14 @@ describe('Peer', () => {
 	});
 
 	test(`send() send direct messages`, () => {
-		const one = createPeer('one');
-		const two = createPeer('two');
-		const three = createPeer('three');
+		const [one, two] = createPeerTree();
+		clearMessages();
 
 		// 1-2, 1-3
-		one.listen('two');
-		one.listen('three');
-		two.connect('one');
-		three.connect('one');
 		two.send({ type: 'known', version: '1.0' }, { to: ['three'] });
 		one.send({ type: 'known', version: '1.0' }, { to: ['three'] });
 
 		expectMessages(onMessage, [
-			{
-				one: {
-					from: 'two',
-					to: ['one'],
-					payload: { type: 'connect', version: '1.0', knownPeers: new Map(), connected: ['two'] },
-				},
-			},
-			{
-				two: {
-					from: 'one',
-					to: ['two'],
-					payload: { type: 'connect', version: '1.0', knownPeers: new Map(), connected: ['one'] },
-				},
-			},
-			{
-				two: {
-					from: 'one',
-					to: [],
-					payload: {
-						type: 'connect',
-						version: '1.0',
-						knownPeers: new Map([
-							['one', [{ type: 'known', version: '1.0' }]],
-							['two', [{ type: 'known', version: '1.0' }]],
-							['three', [{ type: 'known', version: '1.0' }]],
-						]),
-						connected: ['three'],
-					},
-				},
-			},
-			{
-				one: {
-					from: 'three',
-					to: ['one'],
-					payload: { type: 'connect', version: '1.0', knownPeers: new Map(), connected: ['three'] },
-				},
-			},
-			{
-				three: {
-					from: 'one',
-					to: ['three'],
-					payload: {
-						type: 'connect',
-						version: '1.0',
-						knownPeers: new Map(),
-						connected: ['one', 'two'],
-					},
-				},
-			},
 			{ three: { from: 'two', to: ['three'], payload: { type: 'known', version: '1.0' } } },
 			{ three: { from: 'one', to: ['three'], payload: { type: 'known', version: '1.0' } } },
 		]);
@@ -681,32 +814,12 @@ describe('Peer', () => {
 		]);
 	});
 
-	test(`should handle disconnect / reconnect`, () => {
-		const one = createPeer('one');
-		const two = createPeer('two');
-		const three = createPeer('three');
-		const four = createPeer('four');
+	test(`should handle simple 'x.disconnect(y)'`, () => {
+		const [one, two, three, four] = createPeerChain();
+		clearMessages();
 
-		// 1-2, 2-3, 3-4
-		one.listen('two');
-		two.listen('three');
-		three.listen('four');
-		three.connect('two');
-		two.connect('one');
-		four.connect('three');
-
-		for (const peer of [one, two, three, four]) {
-			expect(peer.knownPeers).toEqual(
-				new Map([
-					['one', knownMessages],
-					['two', knownMessages],
-					['three', knownMessages],
-					['four', knownMessages],
-				]),
-			);
-		}
-
-		// disconnect 2-3
+		// 1-2-3-4
+		// disconnect 1-2-x-3-4
 		three.disconnect('two');
 		expect(one.knownPeers).toEqual(
 			new Map([
@@ -733,146 +846,7 @@ describe('Peer', () => {
 			]),
 		);
 
-		// reconnect 2-3
-		two.listen('three');
-		three.connect('two');
-		for (const peer of [one, two, three, four]) {
-			expect(peer.knownPeers).toEqual(
-				new Map([
-					['one', knownMessages],
-					['two', knownMessages],
-					['three', knownMessages],
-					['four', knownMessages],
-				]),
-			);
-		}
-
-		// disconnect all from 2
-		two.disconnect();
-		expect(one.knownPeers).toEqual(new Map([['one', knownMessages]]));
-		expect(two.knownPeers).toEqual(new Map([['two', knownMessages]]));
-		expect(three.knownPeers).toEqual(
-			new Map([
-				['three', knownMessages],
-				['four', knownMessages],
-			]),
-		);
-		expect(four.knownPeers).toEqual(
-			new Map([
-				['four', knownMessages],
-				['three', knownMessages],
-			]),
-		);
-
 		expectMessages(onMessage, [
-			// connect 1-2-3-4
-			// 2-3
-			{
-				two: {
-					from: 'three',
-					to: ['two'],
-					payload: { type: 'connect', version: '1.0', knownPeers: new Map(), connected: ['three'] },
-				},
-			},
-			{
-				three: {
-					from: 'two',
-					to: ['three'],
-					payload: { type: 'connect', version: '1.0', knownPeers: new Map(), connected: ['two'] },
-				},
-			},
-			// 1-2
-			{
-				three: {
-					from: 'two',
-					to: [],
-					payload: {
-						type: 'connect',
-						version: '1.0',
-						knownPeers: new Map([
-							['one', [{ type: 'known', version: '1.0' }]],
-							['two', [{ type: 'known', version: '1.0' }]],
-							['three', [{ type: 'known', version: '1.0' }]],
-						]),
-						connected: ['one'],
-					},
-				},
-			},
-			{
-				one: {
-					from: 'two',
-					to: ['one'],
-					payload: {
-						type: 'connect',
-						version: '1.0',
-						knownPeers: new Map(),
-						connected: ['two', 'three'],
-					},
-				},
-			},
-			{
-				two: {
-					from: 'one',
-					to: ['two'],
-					payload: { type: 'connect', version: '1.0', knownPeers: new Map(), connected: ['one'] },
-				},
-			},
-			// 3-4
-			{
-				two: {
-					from: 'three',
-					to: [],
-					payload: {
-						type: 'connect',
-						version: '1.0',
-						knownPeers: new Map([
-							['three', [{ type: 'known', version: '1.0' }]],
-							['two', [{ type: 'known', version: '1.0' }]],
-							['one', [{ type: 'known', version: '1.0' }]],
-							['four', [{ type: 'known', version: '1.0' }]],
-						]),
-						connected: ['four'],
-					},
-				},
-			},
-			{
-				one: {
-					from: 'three',
-					to: [],
-					payload: {
-						type: 'connect',
-						version: '1.0',
-						knownPeers: new Map([
-							['three', [{ type: 'known', version: '1.0' }]],
-							['two', [{ type: 'known', version: '1.0' }]],
-							['one', [{ type: 'known', version: '1.0' }]],
-							['four', [{ type: 'known', version: '1.0' }]],
-						]),
-						connected: ['four'],
-					},
-				},
-			},
-			{
-				three: {
-					from: 'four',
-					to: ['three'],
-					payload: { type: 'connect', version: '1.0', knownPeers: new Map(), connected: ['four'] },
-				},
-			},
-			{
-				four: {
-					from: 'three',
-					to: ['four'],
-					payload: {
-						type: 'connect',
-						version: '1.0',
-						knownPeers: new Map(),
-						connected: ['three', 'two', 'one'],
-					},
-				},
-			},
-
-			// 3.disconnect(2): 1-2-x-3-4
 			{
 				two: {
 					from: 'three',
@@ -909,8 +883,32 @@ describe('Peer', () => {
 					},
 				},
 			},
+		]);
+	});
 
-			// reconnect 2-3
+	test(`should handle reconnect after 'x.disconnect()'`, () => {
+		const [one, two, three, four] = createPeerChain();
+
+		// 1-2-3-4
+		// disconnect 2-3
+		three.disconnect('two');
+		clearMessages();
+
+		// reconnect 2-3
+		two.listen('three');
+		three.connect('two');
+		for (const peer of [one, two, three, four]) {
+			expect(peer.knownPeers).toEqual(
+				new Map([
+					['one', knownMessages],
+					['two', knownMessages],
+					['three', knownMessages],
+					['four', knownMessages],
+				]),
+			);
+		}
+
+		expectMessages(onMessage, [
 			{
 				one: {
 					from: 'two',
@@ -969,9 +967,59 @@ describe('Peer', () => {
 					},
 				},
 			},
-			//
+		]);
+	});
+
+	test(`should handle 'x.disconnect()'`, () => {
+		const [one, two, three, four] = createPeerChain();
+		clearMessages();
+
+		// 1-2-3-4
+		// disconnect all from 2
+		two.disconnect();
+		expect(one.knownPeers).toEqual(new Map([['one', knownMessages]]));
+		expect(two.knownPeers).toEqual(new Map([['two', knownMessages]]));
+		expect(three.knownPeers).toEqual(
+			new Map([
+				['three', knownMessages],
+				['four', knownMessages],
+			]),
+		);
+		expect(four.knownPeers).toEqual(
+			new Map([
+				['four', knownMessages],
+				['three', knownMessages],
+			]),
+		);
+
+		expectMessages(onMessage, [
 			// 2.disconnect()
-			// 1-2 disconnect: 1-x-2-3-4
+			// 2-3 disconnect: 1-2-x-3-4
+			{
+				three: {
+					from: 'two',
+					to: [],
+					payload: {
+						type: 'disconnect',
+						version: '1.0',
+						disconnected: 'two',
+						unreachable: ['two', 'one'],
+					},
+				},
+			},
+			{
+				four: {
+					from: 'two',
+					to: [],
+					payload: {
+						type: 'disconnect',
+						version: '1.0',
+						disconnected: 'two',
+						unreachable: ['two', 'one'],
+					},
+				},
+			},
+			// 2-1 disconnect: 1-x-2-x-3-4
 			{
 				one: {
 					from: 'two',
@@ -979,50 +1027,13 @@ describe('Peer', () => {
 					payload: {
 						type: 'disconnect',
 						version: '1.0',
-						disconnected: 'two',
-						unreachable: ['two', 'three', 'four'],
+						disconnected: 'three',
+						unreachable: ['three', 'four'],
 					},
 				},
 			},
 			{
-				three: {
-					from: 'two',
-					to: [],
-					payload: {
-						type: 'disconnect',
-						version: '1.0',
-						disconnected: 'one',
-						unreachable: ['one'],
-					},
-				},
-			},
-			{
-				four: {
-					from: 'two',
-					to: [],
-					payload: {
-						type: 'disconnect',
-						version: '1.0',
-						disconnected: 'one',
-						unreachable: ['one'],
-					},
-				},
-			},
-			// 2-3 disconnect: 1-x-2-x-3-4
-			{
-				three: {
-					from: 'two',
-					to: [],
-					payload: {
-						type: 'disconnect',
-						version: '1.0',
-						disconnected: 'two',
-						unreachable: ['two'],
-					},
-				},
-			},
-			{
-				four: {
+				one: {
 					from: 'two',
 					to: [],
 					payload: {
