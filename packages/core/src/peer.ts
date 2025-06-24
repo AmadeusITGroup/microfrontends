@@ -76,6 +76,11 @@ export interface MessagePeerType<M extends Message> {
 	get knownPeers(): Map<string, Message[]>;
 
 	/**
+	 * List of peers reachable from connected peers.
+	 */
+	get peerConnections(): Map<string, Set<string>>;
+
+	/**
 	 * A {@link Subscribable} that emits a message received by the peer
 	 * To handle {@link ServiceMessage} like `connect` or `disconnect`, use the {@link MessagePeer#serviceMessages} stream.
 	 */
@@ -210,6 +215,13 @@ export class MessagePeer<M extends Message> implements MessagePeerType<M> {
 	 */
 	public get knownPeers(): Map<string, Message[]> {
 		return this.#knownPeers;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public get peerConnections(): Map<string, Set<string>> {
+		return this.#endpointPeers;
 	}
 
 	/**
@@ -430,7 +442,11 @@ export class MessagePeer<M extends Message> implements MessagePeerType<M> {
 								payload: {
 									type: 'connect',
 									version: '1.0',
-									knownPeers: this.#knownPeers,
+									knownPeers: new Map(
+										[...this.#knownPeers].filter((key) =>
+											[...payload.knownPeers.keys()].includes(key[0]),
+										),
+									),
 									connected: [...payload.knownPeers.keys()],
 								},
 							});
@@ -444,7 +460,9 @@ export class MessagePeer<M extends Message> implements MessagePeerType<M> {
 						payload: {
 							type: 'connect',
 							version: '1.0',
-							knownPeers: new Map(), // TODO: not sure this is OK
+							knownPeers: new Map(
+								[...this.#knownPeers].filter((key) => connected.includes(key[0])),
+							),
 							connected,
 						},
 					});
