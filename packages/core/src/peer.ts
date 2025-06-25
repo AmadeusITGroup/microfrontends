@@ -433,7 +433,10 @@ export class MessagePeer<M extends Message> implements MessagePeerType<M> {
 					}
 					this.#endpointPeers.set(payload.remoteId, new Set(payload.knownPeers.keys()));
 
-					// 2. notifying all other endpoints that new endpoint is connected
+					// 2. passing the message to the user
+					this.#serviceMessageEmitter.emit(message as any);
+
+					// 3. notifying all other endpoints that new endpoint is connected
 					for (const e of this.#endpoints.values()) {
 						if (e !== endpoint && e.connected) {
 							e.send({
@@ -453,7 +456,7 @@ export class MessagePeer<M extends Message> implements MessagePeerType<M> {
 						}
 					}
 
-					// 3. notifying the new endpoint about all other previously connected endpoints
+					// 4. notifying the new endpoint about all other previously connected endpoints
 					endpoint.send({
 						from: this.id,
 						to: [payload.remoteId],

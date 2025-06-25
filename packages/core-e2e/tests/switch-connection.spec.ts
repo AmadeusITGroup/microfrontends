@@ -13,7 +13,7 @@ test('switch-connection', async ({ page }) => {
 	// wait to have iframe #client-0 initialiazed
 	await page.waitForSelector('#client-0');
 	// in host: at init one connect message, one message and 0 disconnect messages
-	expect(await messages.count()).toBe(1);
+	expect(await messages.count()).toBe(2);
 	expect(await connectMessages.count()).toBe(1);
 	expect(await disconnectMessages.count()).toBe(0);
 
@@ -39,8 +39,8 @@ test('switch-connection', async ({ page }) => {
 	expect(await frame1?.locator('.host-test-host')?.count()).toBe(1);
 	expect(await frame1?.locator('.host-connect')?.count()).toBe(1);
 
-	// in host: 2 messages and one disconnect message
-	expect(await messages.count()).toBe(2);
+	// in host: 2 connect and one disconnect message
+	expect(await messages.count()).toBe(4);
 	expect(await connectMessages.count()).toBe(2);
 	expect(await disconnectMessages.count()).toBe(1);
 
@@ -58,14 +58,14 @@ test('switch-connection', async ({ page }) => {
 	expect(await frame0?.locator('.host-test-host')?.count()).toBe(1);
 	expect(await frame0?.locator('.host-connect')?.count()).toBe(1);
 
-	// in host: 3 messages and 2 disconnect messages
-	expect(await messages.count()).toBe(3);
+	// in host: 3 connect and 2 disconnect messages
+	expect(await messages.count()).toBe(6);
 	expect(await connectMessages.count()).toBe(3);
 	expect(await disconnectMessages.count()).toBe(2);
 
 	// check number of messages in host received from each client
-	expect(await messagesContainer.locator('[class^="client-0"]').count()).toBe(2);
-	expect(await messagesContainer.locator('[class^="client-1"]').count()).toBe(1);
+	expect(await messagesContainer.locator('[class^="client-0"]').count()).toBe(4);
+	expect(await messagesContainer.locator('[class^="client-1"]').count()).toBe(2);
 	expect(await disconnectMessagesContainer.locator('[class^="client-0"]').count()).toBe(1);
 	expect(await disconnectMessagesContainer.locator('[class^="client-1"]').count()).toBe(1);
 	expect(await connectContainer.locator('[class^="client-0"]').count()).toBe(2);
