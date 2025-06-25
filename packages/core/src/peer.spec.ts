@@ -164,6 +164,32 @@ describe('Peer', () => {
 						from: 'two',
 						to: ['one'],
 						payload: {
+							type: 'handshake',
+							endpointId: 'one',
+							remoteId: 'two',
+							version: '1.0',
+							knownPeers: new Map([['two', [{ type: 'known', version: '1.0' }]]]),
+						},
+					},
+				},
+				{
+					two: {
+						from: 'one',
+						to: ['two'],
+						payload: {
+							type: 'handshake',
+							endpointId: 'two',
+							remoteId: 'one',
+							version: '1.0',
+							knownPeers: new Map([['one', [{ type: 'known', version: '1.0' }]]]),
+						},
+					},
+				},
+				{
+					one: {
+						from: 'two',
+						to: ['one'],
+						payload: {
 							type: 'connect',
 							version: '1.0',
 							knownPeers: new Map([['two', [{ type: 'known', version: '1.0' }]]]),
@@ -184,6 +210,19 @@ describe('Peer', () => {
 					},
 				},
 				{
+					one: {
+						from: 'three',
+						to: ['one'],
+						payload: {
+							type: 'handshake',
+							endpointId: 'one',
+							remoteId: 'three',
+							version: '1.0',
+							knownPeers: new Map([['three', [{ type: 'known', version: '1.0' }]]]),
+						},
+					},
+				},
+				{
 					two: {
 						from: 'one',
 						to: [],
@@ -192,6 +231,22 @@ describe('Peer', () => {
 							version: '1.0',
 							knownPeers: new Map([['three', [{ type: 'known', version: '1.0' }]]]),
 							connected: ['three'],
+						},
+					},
+				},
+				{
+					three: {
+						from: 'one',
+						to: ['three'],
+						payload: {
+							type: 'handshake',
+							endpointId: 'three',
+							remoteId: 'one',
+							version: '1.0',
+							knownPeers: new Map([
+								['one', [{ type: 'known', version: '1.0' }]],
+								['two', [{ type: 'known', version: '1.0' }]],
+							]),
 						},
 					},
 				},
@@ -261,6 +316,32 @@ describe('Peer', () => {
 						from: 'three',
 						to: ['two'],
 						payload: {
+							type: 'handshake',
+							endpointId: 'two',
+							remoteId: 'three',
+							version: '1.0',
+							knownPeers: new Map([['three', [{ type: 'known', version: '1.0' }]]]),
+						},
+					},
+				},
+				{
+					three: {
+						from: 'two',
+						to: ['three'],
+						payload: {
+							type: 'handshake',
+							endpointId: 'three',
+							remoteId: 'two',
+							version: '1.0',
+							knownPeers: new Map([['two', [{ type: 'known', version: '1.0' }]]]),
+						},
+					},
+				},
+				{
+					two: {
+						from: 'three',
+						to: ['two'],
+						payload: {
 							type: 'connect',
 							version: '1.0',
 							knownPeers: new Map([['three', [{ type: 'known', version: '1.0' }]]]),
@@ -281,6 +362,35 @@ describe('Peer', () => {
 					},
 				},
 				// 1-2
+				{
+					one: {
+						from: 'two',
+						to: ['one'],
+						payload: {
+							type: 'handshake',
+							endpointId: 'one',
+							remoteId: 'two',
+							version: '1.0',
+							knownPeers: new Map([
+								['two', [{ type: 'known', version: '1.0' }]],
+								['three', [{ type: 'known', version: '1.0' }]],
+							]),
+						},
+					},
+				},
+				{
+					two: {
+						from: 'one',
+						to: ['two'],
+						payload: {
+							type: 'handshake',
+							endpointId: 'two',
+							remoteId: 'one',
+							version: '1.0',
+							knownPeers: new Map([['one', [{ type: 'known', version: '1.0' }]]]),
+						},
+					},
+				},
 				{
 					three: {
 						from: 'two',
@@ -322,6 +432,19 @@ describe('Peer', () => {
 				},
 				// 3-4
 				{
+					three: {
+						from: 'four',
+						to: ['three'],
+						payload: {
+							type: 'handshake',
+							endpointId: 'three',
+							remoteId: 'four',
+							version: '1.0',
+							knownPeers: new Map([['four', [{ type: 'known', version: '1.0' }]]]),
+						},
+					},
+				},
+				{
 					two: {
 						from: 'three',
 						to: [],
@@ -342,6 +465,23 @@ describe('Peer', () => {
 							version: '1.0',
 							knownPeers: new Map([['four', [{ type: 'known', version: '1.0' }]]]),
 							connected: ['four'],
+						},
+					},
+				},
+				{
+					four: {
+						from: 'three',
+						to: ['four'],
+						payload: {
+							type: 'handshake',
+							endpointId: 'four',
+							remoteId: 'three',
+							version: '1.0',
+							knownPeers: new Map([
+								['three', [{ type: 'known', version: '1.0' }]],
+								['two', [{ type: 'known', version: '1.0' }]],
+								['one', [{ type: 'known', version: '1.0' }]],
+							]),
 						},
 					},
 				},
@@ -415,6 +555,32 @@ describe('Peer', () => {
 						from: 'four',
 						to: ['two'],
 						payload: {
+							type: 'handshake',
+							endpointId: 'two',
+							remoteId: 'four',
+							version: '1.0',
+							knownPeers: new Map([['four', [{ type: 'known', version: '1.0' }]]]),
+						},
+					},
+				},
+				{
+					four: {
+						from: 'two',
+						to: ['four'],
+						payload: {
+							type: 'handshake',
+							endpointId: 'four',
+							remoteId: 'two',
+							version: '1.0',
+							knownPeers: new Map([['two', [{ type: 'known', version: '1.0' }]]]),
+						},
+					},
+				},
+				{
+					two: {
+						from: 'four',
+						to: ['two'],
+						payload: {
 							type: 'connect',
 							version: '1.0',
 							knownPeers: new Map([['four', [{ type: 'known', version: '1.0' }]]]),
@@ -436,6 +602,19 @@ describe('Peer', () => {
 				},
 				// 2-3
 				{
+					two: {
+						from: 'three',
+						to: ['two'],
+						payload: {
+							type: 'handshake',
+							endpointId: 'two',
+							remoteId: 'three',
+							version: '1.0',
+							knownPeers: new Map([['three', [{ type: 'known', version: '1.0' }]]]),
+						},
+					},
+				},
+				{
 					four: {
 						from: 'two',
 						to: [],
@@ -444,6 +623,22 @@ describe('Peer', () => {
 							version: '1.0',
 							knownPeers: new Map([['three', [{ type: 'known', version: '1.0' }]]]),
 							connected: ['three'],
+						},
+					},
+				},
+				{
+					three: {
+						from: 'two',
+						to: ['three'],
+						payload: {
+							type: 'handshake',
+							endpointId: 'three',
+							remoteId: 'two',
+							version: '1.0',
+							knownPeers: new Map([
+								['two', [{ type: 'known', version: '1.0' }]],
+								['four', [{ type: 'known', version: '1.0' }]],
+							]),
 						},
 					},
 				},
@@ -480,6 +675,32 @@ describe('Peer', () => {
 						from: 'five',
 						to: ['one'],
 						payload: {
+							type: 'handshake',
+							endpointId: 'one',
+							remoteId: 'five',
+							version: '1.0',
+							knownPeers: new Map([['five', [{ type: 'known', version: '1.0' }]]]),
+						},
+					},
+				},
+				{
+					five: {
+						from: 'one',
+						to: ['five'],
+						payload: {
+							type: 'handshake',
+							endpointId: 'five',
+							remoteId: 'one',
+							version: '1.0',
+							knownPeers: new Map([['one', [{ type: 'known', version: '1.0' }]]]),
+						},
+					},
+				},
+				{
+					one: {
+						from: 'five',
+						to: ['one'],
+						payload: {
 							type: 'connect',
 							version: '1.0',
 							knownPeers: new Map([['five', [{ type: 'known', version: '1.0' }]]]),
@@ -501,6 +722,19 @@ describe('Peer', () => {
 				},
 				// 5-6
 				{
+					five: {
+						from: 'six',
+						to: ['five'],
+						payload: {
+							type: 'handshake',
+							endpointId: 'five',
+							remoteId: 'six',
+							version: '1.0',
+							knownPeers: new Map([['six', [{ type: 'known', version: '1.0' }]]]),
+						},
+					},
+				},
+				{
 					one: {
 						from: 'five',
 						to: [],
@@ -509,6 +743,22 @@ describe('Peer', () => {
 							version: '1.0',
 							knownPeers: new Map([['six', [{ type: 'known', version: '1.0' }]]]),
 							connected: ['six'],
+						},
+					},
+				},
+				{
+					six: {
+						from: 'five',
+						to: ['six'],
+						payload: {
+							type: 'handshake',
+							endpointId: 'six',
+							remoteId: 'five',
+							version: '1.0',
+							knownPeers: new Map([
+								['five', [{ type: 'known', version: '1.0' }]],
+								['one', [{ type: 'known', version: '1.0' }]],
+							]),
 						},
 					},
 				},
@@ -541,6 +791,23 @@ describe('Peer', () => {
 				},
 				// 1-2
 				{
+					one: {
+						from: 'two',
+						to: ['one'],
+						payload: {
+							type: 'handshake',
+							endpointId: 'one',
+							remoteId: 'two',
+							version: '1.0',
+							knownPeers: new Map([
+								['two', [{ type: 'known', version: '1.0' }]],
+								['four', [{ type: 'known', version: '1.0' }]],
+								['three', [{ type: 'known', version: '1.0' }]],
+							]),
+						},
+					},
+				},
+				{
 					five: {
 						from: 'one',
 						to: [],
@@ -569,6 +836,23 @@ describe('Peer', () => {
 								['four', [{ type: 'known', version: '1.0' }]],
 							]),
 							connected: ['two', 'four', 'three'],
+						},
+					},
+				},
+				{
+					two: {
+						from: 'one',
+						to: ['two'],
+						payload: {
+							type: 'handshake',
+							endpointId: 'two',
+							remoteId: 'one',
+							version: '1.0',
+							knownPeers: new Map([
+								['one', [{ type: 'known', version: '1.0' }]],
+								['five', [{ type: 'known', version: '1.0' }]],
+								['six', [{ type: 'known', version: '1.0' }]],
+							]),
 						},
 					},
 				},
@@ -699,6 +983,32 @@ describe('Peer', () => {
 					from: 'two',
 					to: ['one'],
 					payload: {
+						type: 'handshake',
+						endpointId: 'one',
+						remoteId: 'two',
+						version: '1.0',
+						knownPeers: new Map([['two', [{ type: 'known', version: '1.0' }]]]),
+					},
+				},
+			},
+			{
+				two: {
+					from: 'one',
+					to: ['two'],
+					payload: {
+						type: 'handshake',
+						endpointId: 'two',
+						remoteId: 'one',
+						version: '1.0',
+						knownPeers: new Map([['one', [{ type: 'known', version: '1.0' }]]]),
+					},
+				},
+			},
+			{
+				one: {
+					from: 'two',
+					to: ['one'],
+					payload: {
 						type: 'connect',
 						version: '1.0',
 						knownPeers: new Map([['two', [{ type: 'known', version: '1.0' }]]]),
@@ -749,6 +1059,32 @@ describe('Peer', () => {
 					from: 'two',
 					to: ['one'],
 					payload: {
+						type: 'handshake',
+						endpointId: 'one',
+						remoteId: 'two',
+						version: '1.0',
+						knownPeers: new Map([['two', [{ type: 'known', version: '1.0' }]]]),
+					},
+				},
+			},
+			{
+				two: {
+					from: 'one',
+					to: ['two'],
+					payload: {
+						type: 'handshake',
+						endpointId: 'two',
+						remoteId: 'one',
+						version: '1.0',
+						knownPeers: new Map([['one', [{ type: 'known', version: '1.0' }]]]),
+					},
+				},
+			},
+			{
+				one: {
+					from: 'two',
+					to: ['one'],
+					payload: {
 						type: 'connect',
 						version: '1.0',
 						knownPeers: new Map([['two', [{ type: 'known', version: '1.0' }]]]),
@@ -768,11 +1104,26 @@ describe('Peer', () => {
 					},
 				},
 			},
+			// 1.send()
 			{
 				two: {
 					from: 'one',
 					to: [],
 					payload: { type: 'known', version: '1.0' },
+				},
+			},
+			// 1-3
+			{
+				one: {
+					from: 'three',
+					to: ['one'],
+					payload: {
+						type: 'handshake',
+						endpointId: 'one',
+						remoteId: 'three',
+						version: '1.0',
+						knownPeers: new Map([['three', [{ type: 'known', version: '1.0' }]]]),
+					},
 				},
 			},
 			{
@@ -784,6 +1135,22 @@ describe('Peer', () => {
 						version: '1.0',
 						knownPeers: new Map([['three', [{ type: 'known', version: '1.0' }]]]),
 						connected: ['three'],
+					},
+				},
+			},
+			{
+				three: {
+					from: 'one',
+					to: ['three'],
+					payload: {
+						type: 'handshake',
+						endpointId: 'three',
+						remoteId: 'one',
+						version: '1.0',
+						knownPeers: new Map([
+							['one', [{ type: 'known', version: '1.0' }]],
+							['two', [{ type: 'known', version: '1.0' }]],
+						]),
 					},
 				},
 			},
@@ -851,6 +1218,33 @@ describe('Peer', () => {
 		two.send({ type: 'known', version: '2.0' });
 
 		expectMessages(onMessage, [
+			// 1-2
+			{
+				one: {
+					from: 'two',
+					to: ['one'],
+					payload: {
+						type: 'handshake',
+						endpointId: 'one',
+						remoteId: 'two',
+						version: '1.0',
+						knownPeers: new Map([['two', [{ type: 'known', version: '1.0' }]]]),
+					},
+				},
+			},
+			{
+				two: {
+					from: 'one',
+					to: ['two'],
+					payload: {
+						type: 'handshake',
+						endpointId: 'two',
+						remoteId: 'one',
+						version: '1.0',
+						knownPeers: new Map([['one', [{ type: 'known', version: '1.0' }]]]),
+					},
+				},
+			},
 			{
 				one: {
 					from: 'two',
@@ -1006,6 +1400,33 @@ describe('Peer', () => {
 		);
 
 		expectMessages(onMessage, [
+			// 1-2
+			{
+				one: {
+					from: 'two',
+					to: ['one'],
+					payload: {
+						type: 'handshake',
+						endpointId: 'one',
+						remoteId: 'two',
+						version: '1.0',
+						knownPeers: new Map([['two', [{ type: 'known', version: '1.0' }]]]),
+					},
+				},
+			},
+			{
+				two: {
+					from: 'one',
+					to: ['two'],
+					payload: {
+						type: 'handshake',
+						endpointId: 'two',
+						remoteId: 'one',
+						version: '1.0',
+						knownPeers: new Map([['one', [{ type: 'known', version: '1.0' }]]]),
+					},
+				},
+			},
 			{
 				one: {
 					from: 'two',
@@ -1030,6 +1451,20 @@ describe('Peer', () => {
 					},
 				},
 			},
+			// 2-3
+			{
+				two: {
+					from: 'three',
+					to: ['two'],
+					payload: {
+						type: 'handshake',
+						endpointId: 'two',
+						remoteId: 'three',
+						version: '1.0',
+						knownPeers: new Map([['three', [{ type: 'three-only', version: '1.0' }]]]),
+					},
+				},
+			},
 			{
 				one: {
 					from: 'two',
@@ -1039,6 +1474,22 @@ describe('Peer', () => {
 						version: '1.0',
 						knownPeers: new Map([['three', [{ type: 'three-only', version: '1.0' }]]]),
 						connected: ['three'],
+					},
+				},
+			},
+			{
+				three: {
+					from: 'two',
+					to: ['three'],
+					payload: {
+						type: 'handshake',
+						endpointId: 'three',
+						remoteId: 'two',
+						version: '1.0',
+						knownPeers: new Map([
+							['two', [{ type: 'known', version: '1.0' }]],
+							['one', [{ type: 'known', version: '1.0' }]],
+						]),
 					},
 				},
 			},
@@ -1074,22 +1525,48 @@ describe('Peer', () => {
 	});
 
 	test(`should forward unknown messages`, () => {
-		const one = createPeer('one');
-		const two = createPeer('two', { messageCheckStrategy: 'type' });
+		const one = createPeer('one', { messageCheckStrategy: 'type' });
+		const two = createPeer('two');
 		const three = createPeer('three', {
 			knownMessages: [{ type: 'three-only', version: '1.0' }],
 		});
 
-		// 1-2, 2-3
+		// 1-2, 1-3
 		one.listen('two');
-		two.listen('three');
+		one.listen('three');
 		two.connect('one');
-		three.connect('two');
-		one.send({ type: 'three-only', version: '1.0' }, { to: 'three' });
-		one.send({ type: 'three-only', version: '1.0' }, { to: ['three'] });
-		one.send({ type: 'three-only', version: '1.0' });
+		three.connect('one');
+		two.send({ type: 'three-only', version: '1.0' }, { to: 'three' });
+		two.send({ type: 'three-only', version: '1.0' }, { to: ['three'] });
+		two.send({ type: 'three-only', version: '1.0' });
 
 		expectMessages(onMessage, [
+			{
+				one: {
+					from: 'two',
+					to: ['one'],
+					payload: {
+						type: 'handshake',
+						endpointId: 'one',
+						remoteId: 'two',
+						version: '1.0',
+						knownPeers: new Map([['two', [{ type: 'known', version: '1.0' }]]]),
+					},
+				},
+			},
+			{
+				two: {
+					from: 'one',
+					to: ['two'],
+					payload: {
+						type: 'handshake',
+						endpointId: 'two',
+						remoteId: 'one',
+						version: '1.0',
+						knownPeers: new Map([['one', [{ type: 'known', version: '1.0' }]]]),
+					},
+				},
+			},
 			{
 				one: {
 					from: 'two',
@@ -1116,7 +1593,20 @@ describe('Peer', () => {
 			},
 			{
 				one: {
-					from: 'two',
+					from: 'three',
+					to: ['one'],
+					payload: {
+						type: 'handshake',
+						endpointId: 'one',
+						remoteId: 'three',
+						version: '1.0',
+						knownPeers: new Map([['three', [{ type: 'three-only', version: '1.0' }]]]),
+					},
+				},
+			},
+			{
+				two: {
+					from: 'one',
 					to: [],
 					payload: {
 						type: 'connect',
@@ -1127,9 +1617,25 @@ describe('Peer', () => {
 				},
 			},
 			{
-				two: {
+				three: {
+					from: 'one',
+					to: ['three'],
+					payload: {
+						type: 'handshake',
+						endpointId: 'three',
+						remoteId: 'one',
+						version: '1.0',
+						knownPeers: new Map([
+							['one', [{ type: 'known', version: '1.0' }]],
+							['two', [{ type: 'known', version: '1.0' }]],
+						]),
+					},
+				},
+			},
+			{
+				one: {
 					from: 'three',
-					to: ['two'],
+					to: ['one'],
 					payload: {
 						type: 'connect',
 						version: '1.0',
@@ -1140,7 +1646,7 @@ describe('Peer', () => {
 			},
 			{
 				three: {
-					from: 'two',
+					from: 'one',
 					to: ['three'],
 					payload: {
 						type: 'connect',
@@ -1149,34 +1655,35 @@ describe('Peer', () => {
 							['one', [{ type: 'known', version: '1.0' }]],
 							['two', [{ type: 'known', version: '1.0' }]],
 						]),
-						connected: ['two', 'one'],
+						connected: ['one', 'two'],
 					},
 				},
 			},
-			{ three: { from: 'one', to: ['three'], payload: { type: 'three-only', version: '1.0' } } },
-			{ three: { from: 'one', to: ['three'], payload: { type: 'three-only', version: '1.0' } } },
+
+			{ three: { from: 'two', to: ['three'], payload: { type: 'three-only', version: '1.0' } } },
+			{ three: { from: 'two', to: ['three'], payload: { type: 'three-only', version: '1.0' } } },
 			{
-				one: {
-					from: 'two',
-					to: ['one'],
+				two: {
+					from: 'one',
+					to: ['two'],
 					payload: {
 						type: 'error',
 						version: '1.0',
 						error: `Unknown message type "three-only". Known types: ["known"]`,
 						message: {
-							from: 'one',
+							from: 'two',
 							to: [],
 							payload: { type: 'three-only', version: '1.0' },
 						},
 					},
 				},
 			},
-			{ three: { from: 'one', to: [], payload: { type: 'three-only', version: '1.0' } } },
+			{ three: { from: 'two', to: [], payload: { type: 'three-only', version: '1.0' } } },
 		]);
 		expectErrors(onError, [
 			{
-				two: new MessageError(
-					{ from: 'one', to: [], payload: { type: 'three-only', version: '1.0' } },
+				one: new MessageError(
+					{ from: 'two', to: [], payload: { type: 'three-only', version: '1.0' } },
 					`Unknown message type "three-only". Known types: ["known"]`,
 				),
 			},
@@ -1285,6 +1792,22 @@ describe('Peer', () => {
 
 		expectMessages(onMessage, [
 			{
+				two: {
+					from: 'three',
+					to: ['two'],
+					payload: {
+						type: 'handshake',
+						endpointId: 'two',
+						remoteId: 'three',
+						version: '1.0',
+						knownPeers: new Map([
+							['three', [{ type: 'known', version: '1.0' }]],
+							['four', [{ type: 'known', version: '1.0' }]],
+						]),
+					},
+				},
+			},
+			{
 				one: {
 					from: 'two',
 					to: [],
@@ -1296,6 +1819,22 @@ describe('Peer', () => {
 							['four', [{ type: 'known', version: '1.0' }]],
 						]),
 						connected: ['three', 'four'],
+					},
+				},
+			},
+			{
+				three: {
+					from: 'two',
+					to: ['three'],
+					payload: {
+						type: 'handshake',
+						endpointId: 'three',
+						remoteId: 'two',
+						version: '1.0',
+						knownPeers: new Map([
+							['two', [{ type: 'known', version: '1.0' }]],
+							['one', [{ type: 'known', version: '1.0' }]],
+						]),
 					},
 				},
 			},
@@ -1511,6 +2050,33 @@ describe('Peer', () => {
 		}
 
 		expectMessages(onMessage, [
+			// 1-2
+			{
+				one: {
+					from: 'two',
+					to: ['one'],
+					payload: {
+						type: 'handshake',
+						endpointId: 'one',
+						remoteId: 'two',
+						version: '1.0',
+						knownPeers: new Map([['two', []]]),
+					},
+				},
+			},
+			{
+				two: {
+					from: 'one',
+					to: ['two'],
+					payload: {
+						type: 'handshake',
+						endpointId: 'two',
+						remoteId: 'one',
+						version: '1.0',
+						knownPeers: new Map([['one', [{ type: 'new', version: '1.0' }]]]),
+					},
+				},
+			},
 			{
 				one: {
 					from: 'two',
@@ -1535,6 +2101,20 @@ describe('Peer', () => {
 					},
 				},
 			},
+			// 2-3
+			{
+				two: {
+					from: 'three',
+					to: ['two'],
+					payload: {
+						type: 'handshake',
+						endpointId: 'two',
+						remoteId: 'three',
+						version: '1.0',
+						knownPeers: new Map([['three', [{ type: 'known', version: '1.0' }]]]),
+					},
+				},
+			},
 			{
 				one: {
 					from: 'two',
@@ -1544,6 +2124,22 @@ describe('Peer', () => {
 						version: '1.0',
 						knownPeers: new Map([['three', [{ type: 'known', version: '1.0' }]]]),
 						connected: ['three'],
+					},
+				},
+			},
+			{
+				three: {
+					from: 'two',
+					to: ['three'],
+					payload: {
+						type: 'handshake',
+						endpointId: 'three',
+						remoteId: 'two',
+						version: '1.0',
+						knownPeers: new Map([
+							['two', []],
+							['one', [{ type: 'new', version: '1.0' }]],
+						]),
 					},
 				},
 			},
@@ -1622,7 +2218,7 @@ describe('Peer', () => {
 		two.connect('one');
 
 		expect(onMessage.mock.calls.length).toBe(0);
-		expect(onServiceMessage.mock.calls.length).toBe(1); // initial connect message
+		expect(onServiceMessage.mock.calls.length).toBe(2); // initial connect message
 
 		// normal message
 		one.send({ type: 'known', version: '1.0' });
@@ -1639,6 +2235,7 @@ describe('Peer', () => {
 
 		expect(onMessage.mock.calls).toEqual([[{ type: 'known', version: '1.0' }]]);
 		expect(onServiceMessage.mock.calls).toEqual([
+			[{ type: 'handshake', version: '1.0' }],
 			[{ type: 'connect', version: '1.0' }],
 			[{ type: 'declare_messages', version: '1.0' }],
 			[{ type: 'disconnect', version: '1.0' }],
@@ -1678,6 +2275,13 @@ describe('Peer', () => {
 
 		expect(oneMessages).toEqual([
 			{
+				type: 'handshake',
+				endpointId: 'one',
+				remoteId: 'two',
+				version: '1.0',
+				knownPeers: new Map([['two', [{ type: 'known', version: '1.0' }]]]),
+			},
+			{
 				type: 'connect',
 				version: '1.0',
 				knownPeers: new Map([['two', [{ type: 'known', version: '1.0' }]]]),
@@ -1685,6 +2289,13 @@ describe('Peer', () => {
 			},
 		]);
 		expect(twoMessages).toEqual([
+			{
+				type: 'handshake',
+				endpointId: 'two',
+				remoteId: 'one',
+				version: '1.0',
+				knownPeers: new Map([['one', [{ type: 'known', version: '1.0' }]]]),
+			},
 			{
 				type: 'connect',
 				version: '1.0',
@@ -1842,6 +2453,32 @@ describe('Peer', () => {
 		two.connect('one');
 
 		expectMessages(onMessage, [
+			{
+				one: {
+					from: 'two',
+					to: ['one'],
+					payload: {
+						type: 'handshake',
+						endpointId: 'one',
+						remoteId: 'two',
+						version: '1.0',
+						knownPeers: new Map([['two', [{ type: 'known', version: '1.0' }]]]),
+					},
+				},
+			},
+			{
+				two: {
+					from: 'one',
+					to: ['two'],
+					payload: {
+						type: 'handshake',
+						endpointId: 'two',
+						remoteId: 'one',
+						version: '1.0',
+						knownPeers: new Map([['one', [{ type: 'known', version: '1.0' }]]]),
+					},
+				},
+			},
 			{
 				one: {
 					from: 'two',
