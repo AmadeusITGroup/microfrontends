@@ -57,6 +57,6 @@
 		}
 	},
 	"devDependencies": {
-		"ng-packagr": "^19.1.0"
+		"ng-packagr": "^20.0.0"
 	}
 }
