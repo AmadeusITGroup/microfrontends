@@ -1,7 +1,7 @@
 import {
 	ApplicationConfig,
 	provideAppInitializer,
-	provideExperimentalZonelessChangeDetection,
+	provideZonelessChangeDetection,
 } from '@angular/core';
 import { provideRouter, withHashLocation } from '@angular/router';
 
@@ -13,7 +13,7 @@ export const appConfig: ApplicationConfig = {
 		provideAppInitializer(() => {
 			enableLogging(true);
 		}),
-		provideExperimentalZonelessChangeDetection(),
+		provideZonelessChangeDetection(),
 		provideRouter(routes, withHashLocation()),
 	],
 };
