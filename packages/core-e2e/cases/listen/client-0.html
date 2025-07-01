@@ -1,0 +1,52 @@
+<h1>CLIENT 0</h1>
+<button id="connect" name="connect">Connect</button>
+<button id="disconnect" name="disconnect">Disconnect</button>
+<button id="send" name="send">Send</button>
+<h3>Messages</h3>
+<div id="messages"></div>
+<br />
+<script type="module">
+	import { MessagePeer } from '/core.js';
+
+	function onMessage(m) {
+		const messages = document.getElementById('messages');
+		messages.innerHTML += `<div class="${m.from}-${m.payload.type}">${m.from}-${m.payload.type}</div>`;
+	}
+
+	const client = new MessagePeer({ id: 'client-0' });
+
+	client.messages.subscribe(onMessage);
+	client.serviceMessages.subscribe(onMessage);
+
+	client.connect('host', {
+		window: window.parent,
+		origin: 'http://localhost:8091',
+	});
+
+	client.send(
+		{
+			type: 'test-client',
+			version: '1.0',
+		},
+		{ to: ['host'] },
+	);
+
+	// disconnect
+	document.getElementById('disconnect').addEventListener('click', () => {
+		client.disconnect();
+	});
+
+	document.getElementById('connect').addEventListener('click', () => {
+		client.connect('host', {
+			window: window.parent,
+			origin: 'http://localhost:8091',
+		});
+	});
+
+	document.getElementById('send').addEventListener('click', () => {
+		client.send({
+			type: 'TEST-MESSAGE',
+			version: '1.0',
+		});
+	});
+</script>

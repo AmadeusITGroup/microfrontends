@@ -1,31 +1,12 @@
 import type { MessagePeerType, PeerOptions } from './peer';
+import { GLOBAL_HANDSHAKE_HANDLER } from './handlers';
 import { MessagePeer } from './peer';
 import { MessageError } from './message-error';
 import type { Message, RoutedMessage, ServiceMessage } from './message';
 import { from } from 'rxjs';
 
-/**
- * Mocking window event listeners to establish connection via custom events
- */
-const handshakeListeners = new Set<any>();
-window.addEventListener = jest.fn().mockImplementation((type: string, handshakeListener: any) => {
-	if (type === 'handshake') {
-		handshakeListeners.add(handshakeListener);
-	}
-});
-
-window.removeEventListener = jest
-	.fn()
-	.mockImplementation((type: string, handshakeListener: any) => {
-		if (type === 'handshake') {
-			handshakeListeners.delete(handshakeListener);
-		}
-	});
-
 window.dispatchEvent = jest.fn().mockImplementation((event: any) => {
-	for (const listener of handshakeListeners) {
-		listener(event);
-	}
+	GLOBAL_HANDSHAKE_HANDLER(event);
 });
 
 function expectMessages(onMessageMock: any, messages: any[]) {
@@ -63,6 +44,17 @@ describe('Peer', () => {
 		onMessage.mockClear();
 	}
 
+	function createSimpleChain() {
+		const one = createPeer('one');
+		const two = createPeer('two');
+
+		// 1-2
+		one.listen('two');
+		two.connect('one');
+
+		return [one, two];
+	}
+
 	function createPeerChain() {
 		const one = createPeer('one');
 		const two = createPeer('two');
@@ -86,8 +78,7 @@ describe('Peer', () => {
 		const three = createPeer('three');
 
 		// 1-2, 1-3
-		one.listen('two');
-		one.listen('three');
+		one.listen(['two', 'three']);
 		two.connect('one');
 		three.connect('one');
 
@@ -103,15 +94,14 @@ describe('Peer', () => {
 		const six = createPeer('six');
 
 		// 2-4
-		two.listen('four');
+		two.listen(['three', 'four']);
 		four.connect('two');
 
 		// 2-3
-		two.listen('three');
 		three.connect('two');
 
 		// 1-5
-		one.listen('five');
+		one.listen(['five', 'two']);
 		five.connect('one');
 
 		// 5-6
@@ -119,7 +109,6 @@ describe('Peer', () => {
 		six.connect('five');
 
 		// 1-2
-		one.listen('two');
 		two.connect('one');
 
 		return [one, two, three, four, five, six];
@@ -130,11 +119,76 @@ describe('Peer', () => {
 		onError = jest.fn();
 	});
 
-	afterEach(() => {
-		handshakeListeners.clear();
-	});
-
 	describe('test use cases', () => {
+		test(`should create 1-2 chain`, () => {
+			const [one, two] = createSimpleChain();
+
+			for (const peer of [one, two]) {
+				expect(peer.knownPeers).toEqual(
+					new Map([
+						['one', knownMessages],
+						['two', knownMessages],
+					]),
+				);
+			}
+
+			expect(one.peerConnections).toEqual(new Map([['two', new Set(['two'])]]));
+			expect(two.peerConnections).toEqual(new Map([['one', new Set(['one'])]]));
+
+			expectMessages(onMessage, [
+				{
+					one: {
+						from: 'two',
+						to: ['one'],
+						payload: {
+							type: 'handshake',
+							endpointId: 'one',
+							remoteId: 'two',
+							version: '1.0',
+							knownPeers: new Map([['two', [{ type: 'known', version: '1.0' }]]]),
+						},
+					},
+				},
+				{
+					two: {
+						from: 'one',
+						to: ['two'],
+						payload: {
+							type: 'handshake',
+							endpointId: 'two',
+							remoteId: 'one',
+							version: '1.0',
+							knownPeers: new Map([['one', [{ type: 'known', version: '1.0' }]]]),
+						},
+					},
+				},
+				{
+					one: {
+						from: 'two',
+						to: ['one'],
+						payload: {
+							type: 'connect',
+							version: '1.0',
+							knownPeers: new Map([['two', [{ type: 'known', version: '1.0' }]]]),
+							connected: ['two'],
+						},
+					},
+				},
+				{
+					two: {
+						from: 'one',
+						to: ['two'],
+						payload: {
+							type: 'connect',
+							version: '1.0',
+							knownPeers: new Map([['one', [{ type: 'known', version: '1.0' }]]]),
+							connected: ['one'],
+						},
+					},
+				},
+			]);
+		});
+
 		test(`should create 1-2 1-3 tree`, () => {
 			const [one, two, three] = createPeerTree();
 
@@ -154,7 +208,6 @@ describe('Peer', () => {
 					['three', new Set(['three'])],
 				]),
 			);
-
 			expect(two.peerConnections).toEqual(new Map([['one', new Set(['one', 'three'])]]));
 			expect(three.peerConnections).toEqual(new Map([['one', new Set(['one', 'two'])]]));
 
@@ -935,7 +988,8 @@ describe('Peer', () => {
 
 		// should throw because of the trailing slash
 		expect(() => {
-			peer.listen('two', {
+			peer.listen({
+				id: 'two',
 				origin: 'https://test.com/',
 			});
 		}).toThrow();
@@ -1045,8 +1099,7 @@ describe('Peer', () => {
 		three.send({ type: 'known', version: '1.0' });
 
 		// 1-2, 1-3
-		one.listen('two');
-		one.listen('three');
+		one.listen(['two', 'three']);
 		two.connect('one');
 		// 1:(connect-2), 2:(connect-1), 2:(known-1)
 		three.connect('one');
@@ -1193,13 +1246,6 @@ describe('Peer', () => {
 						]),
 						connected: ['one', 'two'],
 					},
-				},
-			},
-			{
-				three: {
-					from: 'one',
-					to: [],
-					payload: { type: 'known', version: '1.0' },
 				},
 			},
 		]);
@@ -1532,8 +1578,7 @@ describe('Peer', () => {
 		});
 
 		// 1-2, 1-3
-		one.listen('two');
-		one.listen('three');
+		one.listen(['two', 'three']);
 		two.connect('one');
 		three.connect('one');
 		two.send({ type: 'three-only', version: '1.0' }, { to: 'three' });
@@ -1777,7 +1822,6 @@ describe('Peer', () => {
 		clearMessages();
 
 		// reconnect 2-3
-		two.listen('three');
 		three.connect('two');
 		for (const peer of [one, two, three, four]) {
 			expect(peer.knownPeers).toEqual(
@@ -2342,13 +2386,13 @@ describe('Peer', () => {
 		expect(messages).toEqual([{ type: 'known', version: '1.0' }]);
 	});
 
-	test(`should reuse the same connection when '.listen()' multiple times`, () => {
+	test(`should reuse the same listener when '.listen()' multiple times`, () => {
 		const one = new MessagePeer({ id: 'one' });
 
-		const promise1 = one.listen('two');
-		const promise2 = one.listen('two');
+		const listener1 = one.listen('two');
+		const listener2 = one.listen('two');
 
-		expect(promise1 === promise2).toBe(true);
+		expect(listener1 === listener2).toBe(true);
 	});
 
 	test(`should reuse the same connection when '.connect()' multiple times`, () => {
@@ -2449,7 +2493,6 @@ describe('Peer', () => {
 
 		one.listen('two');
 		one.disconnect('two'); // should not schedule a disconnect message
-		one.listen('two');
 		two.connect('one');
 
 		expectMessages(onMessage, [

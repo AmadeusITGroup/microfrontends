@@ -51,7 +51,31 @@
 		const messages = document.getElementById('messages');
 		messages.innerHTML += `<div id="${m.from}">${m.from}</div>`;
 	});
-	host.listen('client-0');
+
+	host.listen([
+		'client-0',
+		'client-1',
+		{
+			id: 'client-2',
+			source: document.getElementById('iframe-same-origin-allow-scripts').contentWindow,
+		},
+		{
+			id: 'client-4',
+			source: document.getElementById('iframe-not-same-origin-allow-scripts').contentWindow,
+			origin: 'http://localhost:8092',
+		},
+		{
+			id: 'client-3',
+			source: document.getElementById('iframe-not-same-origin-no-sandbox').contentWindow,
+			origin: 'http://localhost:8092',
+		},
+		{
+			id: 'client-5',
+			source: document.getElementById('iframe-not-same-origin-allow-scripts-origin').contentWindow,
+			origin: 'http://localhost:8092',
+		},
+	]);
+
 	host.send(
 		{
 			type: 'test',
@@ -74,30 +98,4 @@
 		},
 		{ to: ['host'] },
 	);
-
-	// 1. same origin, no sandbox
-	host.listen('client-1');
-
-	// 2. same origin, allow-scripts
-	host.listen('client-2', {
-		window: document.getElementById('iframe-same-origin-allow-scripts').contentWindow,
-	});
-
-	// 3. not same origin, no sandbox
-	host.listen('client-3', {
-		window: document.getElementById('iframe-not-same-origin-no-sandbox').contentWindow,
-		origin: 'http://localhost:8092',
-	});
-
-	// 4. not same origin, allow-scripts
-	host.listen('client-4', {
-		window: document.getElementById('iframe-not-same-origin-allow-scripts').contentWindow,
-		origin: 'http://localhost:8092',
-	});
-
-	// 5. not same origin, allow-scripts, allow-same-origin
-	host.listen('client-5', {
-		window: document.getElementById('iframe-not-same-origin-allow-scripts-origin').contentWindow,
-		origin: 'http://localhost:8092',
-	});
 </script>

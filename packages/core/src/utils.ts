@@ -1,6 +1,11 @@
-import { Message, RoutedMessage } from './message';
+import { HandshakeMessage, Message, RoutedMessage } from './message';
 import { MessageError } from './message-error';
 import { MessageCheckStrategy } from './checks';
+import {
+	NormalizedPeerConnectionFilter,
+	PeerConnectionFilter,
+	PeerConnectionFilterFn,
+} from './peer';
 
 let LOGGING_ENABLED = false;
 
@@ -75,4 +80,57 @@ export function checkOriginIsValid(origin: string) {
 	if (parsedURL.origin !== origin) {
 		throw new Error(`'${origin}' is not a valid origin, did you mean '${parsedURL.origin}'?`);
 	}
+}
+
+export function normalizeFilter(
+	filter: string | PeerConnectionFilter | PeerConnectionFilterFn,
+): NormalizedPeerConnectionFilter {
+	switch (typeof filter) {
+		case 'string':
+			return { id: filter };
+		case 'function':
+			return { predicate: filter };
+		default:
+			return filter;
+	}
+}
+
+export function createHandshakeMessage(
+	from: string,
+	to: string,
+	knownPeers: Map<string, Message[]>,
+): RoutedMessage<HandshakeMessage> {
+	return structuredClone({
+		from,
+		to: [to],
+		payload: {
+			type: 'handshake',
+			version: '1.0',
+			endpointId: to,
+			remoteId: from,
+			knownPeers,
+		},
+	});
+}
+
+export function eventMatchesFilters(
+	event: MessageEvent<RoutedMessage<HandshakeMessage>>,
+	connectionFilters: NormalizedPeerConnectionFilter[],
+) {
+	const { origin, source, data: message } = event;
+	const { remoteId } = message.payload;
+
+	return (
+		connectionFilters.length === 0 ||
+		connectionFilters.some(
+			(f) =>
+				(f.id !== undefined || f.source !== undefined || f.origin !== undefined || f.predicate) &&
+				(f.id === undefined || f.id === remoteId) &&
+				(f.source === undefined || f.source === source) &&
+				(f.origin === undefined ||
+					f.origin === origin ||
+					(origin === 'null' && f.source === source)) &&
+				(f.predicate === undefined || f.predicate(message, source, origin)),
+		)
+	);
 }

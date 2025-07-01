@@ -45,11 +45,11 @@ describe('MessagePeerService', () => {
 		expect(sendSpy).toHaveBeenCalledWith(message, undefined);
 	});
 
-	it('should listen for messages', async () => {
+	it('should listen for messages', () => {
 		const peerId = 'peer-id';
 		const listenSpy = jest.spyOn(MessagePeer.prototype, 'listen').mockImplementation();
-		await service.listen(peerId);
-		expect(listenSpy).toHaveBeenCalledWith(peerId, undefined);
+		service.listen(peerId);
+		expect(listenSpy).toHaveBeenCalledWith(peerId);
 	});
 
 	it('should connect to a peer', async () => {
@@ -118,7 +118,10 @@ describe('MessagePeerService Interactions', () => {
 		s1.send({ type: 'test', version: '2.0' });
 
 		expect(messages).toEqual([{ type: 'test', version: '1.0' }]);
-		expect(serviceMessages).toEqual([{ type: 'connect', version: '1.0' }]);
+		expect(serviceMessages).toEqual([
+			{ type: 'handshake', version: '1.0' },
+			{ type: 'connect', version: '1.0' },
+		]);
 		expect(errors).toEqual(['Unknown message version "2.0". Known versions: ["1.0"]']);
 	});
 });
@@ -134,10 +137,7 @@ describe('MessagePeerService DI overrides', () => {
 		origin: 'mocked origin',
 	};
 
-	const listenOptions: PeerConnectionOptions = {
-		window: 'mocked listen window' as any,
-		origin: 'mocked listen origin',
-	};
+	const listenOptions = ['one', 'two'];
 
 	beforeEach(() => {
 		connectSpy = jest.spyOn(MessagePeer.prototype, 'connect').mockImplementation();
@@ -168,11 +168,11 @@ describe('MessagePeerService DI overrides', () => {
 		service.connect('A');
 		service.listen('B');
 		expect(connectSpy).toHaveBeenCalledWith('A', { ...connectOptions });
-		expect(listenSpy).toHaveBeenCalledWith('B', { ...listenOptions });
+		expect(listenSpy).toHaveBeenCalledWith('B');
 
 		service.connect('C', { origin: 'replaced' });
-		service.listen('D', { origin: 'replaced' });
+		service.listen();
 		expect(connectSpy).toHaveBeenCalledWith('C', { ...connectOptions, origin: 'replaced' });
-		expect(listenSpy).toHaveBeenCalledWith('D', { ...listenOptions, origin: 'replaced' });
+		expect(listenSpy).toHaveBeenCalledWith(listenOptions);
 	});
 });

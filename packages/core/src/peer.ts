@@ -1,10 +1,25 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Endpoint, EndpointType } from './endpoint';
-import { ErrorMessage, isServiceMessage, Message, RoutedMessage, ServiceMessage } from './message';
+import { ConnectEndpoint, Endpoint, EndpointType } from './endpoint';
+import {
+	ErrorMessage,
+	HandshakeMessage,
+	isServiceMessage,
+	Message,
+	RoutedMessage,
+	ServiceMessage,
+} from './message';
 import { MessageError } from './message-error';
-import { checkMessageHasCorrectStructure, logger } from './utils';
+import {
+	checkMessageHasCorrectStructure,
+	checkOriginIsValid,
+	createHandshakeMessage,
+	eventMatchesFilters,
+	logger,
+	normalizeFilter,
+} from './utils';
 import { getDefaultMessageChecks, MessageCheck, MessageCheckStrategy } from './checks';
 import { Emitter, Subscribable } from './emitter';
+import { registerGlobalHandshakeHandler, unregisterGlobalHandshakeHandler } from './handlers';
 
 /**
  * Options to establish peer connection.
@@ -12,18 +27,60 @@ import { Emitter, Subscribable } from './emitter';
  */
 export interface PeerConnectionOptions {
 	/**
-	 * Window object peer should connect to or listen connections on.
+	 * Window object peer should connect to.
 	 * Default is `window` object of the current environment.
 	 * It can be used to connect to a different window or an iframe.
 	 */
 	window?: Window;
 	/**
-	 * Origin of the window object peer should connect to or listen connections on.
+	 * Origin of the window object peer should connect to.
 	 * Default is `window.origin` of the current environment.
 	 * Used to verify that the connection is established with the correct window from different origin.
 	 */
 	origin?: string;
 }
+
+/**
+ * Function that filters incoming connections based on the message and its source.
+ * @param message - the message received from the peer
+ * @param source - the source of the message
+ * @param origin - the origin of the message
+ */
+export type PeerConnectionFilterFn = (
+	message: RoutedMessage<HandshakeMessage>,
+	source: MessageEventSource | null,
+	origin: string,
+) => boolean;
+
+/**
+ * Filter for incoming connections.
+ */
+export interface PeerConnectionFilter {
+	/**
+	 * Id of a peer allowed to connect.
+	 */
+	id?: string;
+	/**
+	 * Window object for allowed incoming connections.
+	 * Default is `window` object of the current environment.
+	 * It can be used to connect to a different window or an iframe.
+	 */
+	source?: MessageEventSource;
+	/**
+	 * Origin of allowed incoming connections.
+	 * Default is `window.origin` of the current environment.
+	 * Used to verify that the connection is established with the correct window from different origin.
+	 */
+	origin?: string;
+}
+
+/**
+ * Normalized version of the connection filter
+ * @internal
+ */
+export type NormalizedPeerConnectionFilter = PeerConnectionFilter & {
+	predicate?: PeerConnectionFilterFn;
+};
 
 /**
  * Options to pass when sending a message to the network.
@@ -35,11 +92,6 @@ export interface PeerSendOptions {
 	 */
 	to?: string | string[];
 }
-
-const DEFAULT_START_OPTIONS: Required<PeerConnectionOptions> = {
-	window,
-	origin: window.origin,
-};
 
 /**
  * Options to pass when creating a new peer.
@@ -99,19 +151,26 @@ export interface MessagePeerType<M extends Message> {
 
 	/**
 	 * Connects to the peer with the given id
-	 * @param peerId - id of the peer we're connecting to
+	 * @param remoteId - a remote peer id to connect to
 	 * @param options - additional {@link PeerConnectionOptions} options for the connection
 	 * @returns a function that can be called to disconnect this peer from the network
 	 */
-	connect(peerId: string, options?: PeerConnectionOptions): Promise<() => void>;
+	connect(remoteId: string, options?: PeerConnectionOptions): Promise<() => void>;
 
 	/**
-	 * Listens for incoming connections from the peer with the given id
-	 * @param peerId - id of the peer we're listening for
-	 * @param options - additional {@link PeerConnectionOptions} for the connection
-	 * @returns a function that can be called to disconnect this peer from the network*
+	 * Listens for incoming connections from any peers that match the provided filters.
+	 * @param filters - optional filters to use to accept incoming connections. If not provided,
+	 * accepts all incoming connections, otherwise tries to match at least one of the filters. Can be
+	 * a string with peer id, a {@link PeerConnectionFilter} object or an array of such objects.
+	 * @returns a function that can be called to disconnect this peer from the network
 	 */
-	listen(peerId: string, options?: PeerConnectionOptions): Promise<() => void>;
+	listen(
+		filters?:
+			| string
+			| PeerConnectionFilter
+			| PeerConnectionFilterFn
+			| readonly (string | PeerConnectionFilter)[],
+	): () => void;
 
 	/**
 	 * Sends a message to the network.
@@ -153,16 +212,20 @@ export interface MessagePeerType<M extends Message> {
  *
  * ```ts
  * // Simple example of creating two peers and sending messages between them
- * const one = new MessagePeer({ id: 'one', onMessage: (message) => {} });
- * const two = new MessagePeer({ id: 'two', onMessage: (message) => {} });
+ * const one = new MessagePeer({ id: 'one' });
+ * const two = new MessagePeer({ id: 'two' });
  *
  * // connecting two peers
- * one.listen('two');
+ * one.listen();
  * two.connect('one');
  *
  * // sending messages
  * one.send({ type: 'ping', version: '1.0' }); // broadcast
  * two.send({ type: 'pong', version: '1.0' }, { to: 'one' }); // send to a specific peer
+ *
+ * // receiving messages
+ * one.messages.subscribe((message) => {}); // receives all messages sent to 'one'
+ * one.serviceMessages.subscribe((message) => {}); // receives service messages like 'connect', 'disconnect', etc.
  *
  * // learning about the network
  * one.knownPeers; // lists all known peers and messages they can receive
@@ -176,6 +239,9 @@ export class MessagePeer<M extends Message> implements MessagePeerType<M> {
 	readonly #id: string;
 	readonly #endpoints = new Map<string, EndpointType<M>>();
 	readonly #endpointPeers = new Map<string, Set<string>>();
+
+	readonly #connectionFilters: NormalizedPeerConnectionFilter[] = [];
+	readonly #stopListening: () => void;
 
 	readonly #messageEmitter = new Emitter<RoutedMessage<M>>();
 	readonly #serviceMessageEmitter = new Emitter<RoutedMessage<ServiceMessage>>();
@@ -199,6 +265,12 @@ export class MessagePeer<M extends Message> implements MessagePeerType<M> {
 
 		this.#messageCheckStrategy = options.messageCheckStrategy || 'default';
 		this.#defaultMessageChecks = getDefaultMessageChecks(this.#messageCheckStrategy);
+
+		this.#stopListening = () => {
+			logger(`PEER(${this.id}): stopped listening for connections`);
+			unregisterGlobalHandshakeHandler(this.id);
+			this.#connectionFilters.length = 0;
+		};
 
 		logger(`PEER(${this.id}): created`, this.#knownPeers);
 	}
@@ -248,21 +320,54 @@ export class MessagePeer<M extends Message> implements MessagePeerType<M> {
 	/**
 	 * @inheritDoc
 	 */
-	public connect(peerId: string, options?: PeerConnectionOptions) {
-		logger(`PEER(${this.id}): connecting to '${peerId}'`);
+	public connect(remoteId: string, options?: PeerConnectionOptions): Promise<() => void> {
+		logger(`PEER(${this.id}): connecting to '${remoteId}'`);
 
-		let endpoint = this.#endpoints.get(peerId);
-		if (!endpoint) {
-			endpoint = new Endpoint<M>(this.id);
-			this.#endpoints.set(peerId, endpoint);
+		// 1. processing options
+		const hostWindow = options?.window || window;
+		const hostOrigin = options?.origin || window.origin;
+
+		checkOriginIsValid(hostOrigin);
+
+		// 2. creating or getting an existing endpoint
+		let existingEndpoint = this.#endpoints.get(remoteId);
+		if (!existingEndpoint) {
+			// creating a new endpoint
+			const endpoint = new ConnectEndpoint<M>(this.id, remoteId, hostWindow, hostOrigin);
+			this.#endpoints.set(remoteId, endpoint);
+
+			// 3. setting up port for message handling
+			endpoint.port.onmessage = (event: MessageEvent<RoutedMessage<M & HandshakeMessage>>) => {
+				const message = event.data;
+				const payload = message.payload;
+				logger(`PEER(${this.id}): '${payload.type}' message received from '${remoteId}':`, message);
+
+				// 4. if handshake was done - we can handle the message
+				if (endpoint.connected) {
+					this.#handleMessage(endpoint, message);
+				}
+
+				// 5. handling handshake messages
+				else if (payload.type === 'handshake') {
+					if (payload.endpointId === this.id && payload.remoteId === remoteId) {
+						logger(`PEER(${this.id}): handshake received from ${remoteId}:`, hostOrigin);
+						this.#handleMessage(endpoint, message);
+						endpoint.resolve(() => this.#disconnectEndpoint(endpoint));
+					}
+				} else {
+					logger(`PEER(${this.id}): handshake was expected, got:`, message);
+					endpoint.reject(`Handshake was expected, got: ${JSON.stringify(message)}`);
+				}
+			};
+
+			// 6. sending handshake message to the peer
+			const handshake = createHandshakeMessage(this.id, remoteId, this.#knownPeers);
+			endpoint.sendHandshake(handshake);
+
+			existingEndpoint = endpoint;
 		}
 
-		return endpoint.connect(peerId, {
-			...DEFAULT_START_OPTIONS,
-			...options,
-			knownPeers: this.#knownPeers,
-			onMessage: (message) => this.#handleEndpointMessage(endpoint, message),
-		});
+		return existingEndpoint.connection;
 	}
 
 	/**
@@ -275,21 +380,35 @@ export class MessagePeer<M extends Message> implements MessagePeerType<M> {
 	/**
 	 * @inheritDoc
 	 */
-	public listen(peerId: string, options?: PeerConnectionOptions) {
-		logger(`PEER(${this.id}): listening for '${peerId}'`);
+	public listen(
+		filters:
+			| string
+			| PeerConnectionFilter
+			| PeerConnectionFilterFn
+			| readonly (string | PeerConnectionFilter)[] = [],
+	): () => void {
+		// 1. normalizing filters
+		// making sure that we have only `ConnectionFilter` objects in an array
+		const normalizedFilters: NormalizedPeerConnectionFilter[] = Array.isArray(filters)
+			? filters.map(normalizeFilter)
+			: [normalizeFilter(filters as string | PeerConnectionFilter | PeerConnectionFilterFn)];
 
-		let endpoint = this.#endpoints.get(peerId);
-		if (!endpoint) {
-			endpoint = new Endpoint<M>(this.id);
-			this.#endpoints.set(peerId, endpoint);
+		// checking that filters are correct
+		for (const { origin } of normalizedFilters) {
+			if (origin !== undefined) {
+				checkOriginIsValid(origin);
+			}
 		}
 
-		return endpoint.listen(peerId, {
-			...DEFAULT_START_OPTIONS,
-			...options,
-			knownPeers: this.#knownPeers,
-			onMessage: (message) => this.#handleEndpointMessage(endpoint, message),
-		});
+		this.#connectionFilters.length = 0;
+		this.#connectionFilters.push(...normalizedFilters);
+
+		// 2. accepting handshake messages
+		registerGlobalHandshakeHandler(this.id, this.#handleHandshakeEvent.bind(this));
+
+		logger(`PEER(${this.id}): waiting for connections`, this.#connectionFilters);
+
+		return this.#stopListening;
 	}
 
 	/**
@@ -332,11 +451,65 @@ export class MessagePeer<M extends Message> implements MessagePeerType<M> {
 	}
 
 	/**
+	 * Handle handshake provided by the global handler
+	 *
+	 * @param event - handshake event pre-approved by the global handler
+	 */
+	#handleHandshakeEvent(event: MessageEvent<RoutedMessage<M & HandshakeMessage>>) {
+		const { data: handshakeMessage, ports } = event;
+		const { payload } = handshakeMessage;
+		const { remoteId } = payload;
+
+		// -> (structure ok; 'handshake' for us)
+		// 1. Do we already have a connection to this peer?
+		if (this.#endpoints.has(remoteId)) {
+			logger(`PEER(${this.id}): HS declined: already connected to '${remoteId}'`);
+			return;
+		}
+
+		// -> (structure ok; 'handshake' for us; no existing; accepting)
+		// 2. Does the peer match our filters?
+		if (!eventMatchesFilters(event, this.#connectionFilters)) {
+			logger(
+				`PEER(${this.id}): HS declined: connection from '${remoteId}' does not match any of the filters:`,
+				this.#connectionFilters,
+			);
+			return;
+		}
+
+		// -> (structure ok; 'handshake' for us; no existing; accepting; matches filters)
+		// 3. Create a new endpoint for the peer, configure, and register it
+		const [port] = ports;
+
+		// configuring the connection port we've just received
+		port.onmessage = ({ data }: MessageEvent<RoutedMessage<M>>) =>
+			this.#handleMessage(endpoint, data);
+
+		// new endpoint for the peer
+		const endpoint = new Endpoint<M>(this.id, remoteId, port);
+		this.#endpoints.set(remoteId, endpoint);
+		logger(`PEER(${this.id}): created endpoint '${remoteId}'`, endpoint);
+
+		// 4. Do the handshake
+		// creating a handshake before processing the message to avoid changing knownPeers
+		const handshake = createHandshakeMessage(this.id, remoteId, this.#knownPeers);
+
+		// processing 'handshake' internally
+		this.#handleMessage(endpoint, handshakeMessage);
+
+		// sending back the handshake message directly through the port
+		endpoint.port.postMessage(handshake);
+
+		// open connection
+		endpoint.resolve(() => this.disconnect(remoteId));
+	}
+
+	/**
 	 * Disconnect from a particular endpoint
 	 * @param endpoint - endpoint to disconnect from
 	 */
 	#disconnectEndpoint(endpoint: EndpointType<M>) {
-		const remoteId = endpoint.remoteId!;
+		const { remoteId } = endpoint;
 
 		// 0. collecting all peers that will be disconnected
 		const disconnectedPeers = [...(this.#endpointPeers.get(remoteId) || [])];
@@ -406,7 +579,7 @@ export class MessagePeer<M extends Message> implements MessagePeerType<M> {
 	 * @param endpoint - endpoint that sent the message
 	 * @param message - message to process
 	 */
-	#handleEndpointMessage(endpoint: EndpointType<M>, message: RoutedMessage<M>) {
+	#handleMessage(endpoint: EndpointType<M>, message: RoutedMessage<M>) {
 		logger(`PEER(${this.id}): received message`, message, this.#knownPeers);
 
 		// validating incoming message structure
@@ -483,12 +656,14 @@ export class MessagePeer<M extends Message> implements MessagePeerType<M> {
 						}
 
 						// 2. updating the list of known peers
-						const knownPeers = this.#endpointPeers.get(endpoint.remoteId!)!;
-						for (const id of payload.knownPeers.keys()) {
-							if (id === this.id || [...this.#endpoints.keys()].includes(id)) {
-								continue;
+						const knownPeers = this.#endpointPeers.get(endpoint.remoteId);
+						if (knownPeers) {
+							for (const id of payload.knownPeers.keys()) {
+								if (id === this.id || [...this.#endpoints.keys()].includes(id)) {
+									continue;
+								}
+								knownPeers.add(id);
 							}
-							knownPeers.add(id);
 						}
 
 						// as soon as we're connected properly, we dump the message queue
