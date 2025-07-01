@@ -18,6 +18,7 @@ The Amadeus Toolkit for Micro Frontends provides a messaging system that allows 
 
 - [Creating a Message Peer](#creating-a-message-peer)
 - [Connecting to another peer](#connecting-to-another-peer)
+- [Listening for connections](#listening-for-connections)
 - [Declaring Message types](#declaring-message-types)
 - [Sending and receiving messages](#sending-and-receiving-messages)
 - [Service messages](#service-messages)
@@ -31,17 +32,8 @@ You can create several message peers and connect them to each other in any way a
 ```ts
 import { Message, MessagePeer } from '@amadeus-it-group/microfrontends';
 
-// Message types are optional
-const peer = new MessagePeer({
-  // unique identifier for this peer in the network
-  id: 'one',
-
-  // list of messages this peer accepts
-  knownMessages: [
-    { type: 'hello', version: '1.0' },
-    { type: 'hello', version: '2.0' },
-  ],
-});
+// 'one' is unique identifier for this peer in the network
+const peer = new MessagePeer({ id: 'one' });
 ```
 
 ### Connecting to another peer
@@ -51,25 +43,70 @@ A peer can either wait for incoming connections from another peer via `.listen()
 ```ts
 import { MessagePeer } from '@amadeus-it-group/microfrontends';
 
-// Create two peers
-// First waits for incoming connections from 'two'
+// Create two peers.
+// First peer waits for any incoming connection
 const one = new MessagePeer({ id: 'one' });
-one.listen('two');
+one.listen();
 
-// Second connects to 'one'
+// Second peer connects to the first one
 const two = new MessagePeer({ id: 'two' });
-two.connect('one');
+const disconnect = two.connect('one');
 
 // if connection crosses iFrames, you might need to provide
-// expected window and origin for both `connect` and `listen` methods
-one.listen('two', {
-  window: iframe.contentWindow,
+// expected window and origin for `connect` and `listen`  methods
+two.connect('one', {
+  window: oneWindow,
   origin: 'https://example.com',
 });
 
 // Disconnecting
-one.disconnect('two'); // disconnect from a specific peer
-one.disconnect(); // disconnect from all peers
+disconnect(); // 'two' disconnects from 'one'
+one.disconnect('two'); // 'one' disconnects from 'two'
+one.disconnect(); // 'one' disconnects from all connected peers
+```
+
+### Listening for connections
+
+A peer can decide which incoming connections to accept. Simplest usage is to listen for all connections without any filtering:
+
+```ts
+const stop = peer.listen(); // start listening
+stop(); // stop listening; can restart anytime
+```
+
+More advanced usage allows you to filter incoming connections based on the peer id, source window, origin or a custom logic.
+
+```ts
+// 1. Using simple peer ids
+peer.listen('two');
+peer.listen(['two', 'three']);
+
+// 2. Using matching objects
+// ex. from peer 'two' from a specific iframe of the expected origin
+peer.listen({
+  id: 'two',
+  source: iframe.contentWindow,
+  origin: 'https://example.com',
+});
+
+// ex. any connection from this particular iframe
+peer.listen({
+  source: iframe.contentWindow,
+});
+
+// ex. any connection from this origin
+peer.listen({
+  origin: 'https://example.com',
+});
+
+// 3. Using a combination of ids and objects
+peer.listen(['one', 'two', { id: 'three', origin: 'https://example.com' }]);
+
+// 4. Using a custom function
+// ex. filter connections based on the handshake message and where it comes from
+peer.listen((message, source, origin) => {
+  return true; // you decide whether to accept the connection
+});
 ```
 
 ### Declaring Message types
@@ -147,6 +184,9 @@ const peer = new MessagePeer({ id: 'one' });
 
 peer.serviceMessages.subscribe(({ payload }: ServiceMessage) => {
   switch (payload.type) {
+    case 'handshake':
+      // instance of `HandshakeMessage`
+      break;
     case 'connect':
       // instance of `ConnectMessage`
       break;

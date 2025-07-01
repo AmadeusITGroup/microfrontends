@@ -34,8 +34,7 @@ export class HostComponent {
 	msg = inject(MessagingService);
 
 	constructor() {
-		this.host.listen('client-angular');
-		this.host.listen('client-core');
+		this.host.listen();
 
 		this.host.messages$.subscribe(({ payload }) => {
 			if (payload.type === 'test') {

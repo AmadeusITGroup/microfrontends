@@ -47,7 +47,7 @@
 			disconnectM.innerHTML += `<div class="${m.from}-${m.payload.type}">client disconnected: ${m.from}-${m.payload.type}</div>`;
 			const clientId = m.from === 'client-0' ? 'client-1' : 'client-0';
 			// when a client is disconnected create the other one
-			createClient(clientId, 'http://localhost:8092');
+			createClient(clientId);
 		} else if (m.payload?.type === 'connect') {
 			const connectMessages = document.getElementById('connect');
 			connectMessages.innerHTML += `<div class="${m.from}-${m.payload.type}">${m.from}-${m.payload.type}</div>`;
@@ -63,6 +63,8 @@
 		knownMessages,
 	});
 
+	host.listen(['client-0', 'client-1']);
+
 	host.messages.subscribe(onMessage);
 	host.serviceMessages.subscribe(onMessage);
 
@@ -71,11 +73,9 @@
 
 	// helper functions
 	// create the iframe element, listen form connection from it, send an initial messsage (after connection established)
-	function createClient(clientId, origin) {
+	function createClient(clientId) {
 		// create iframe
 		addIframe(iframes[clientId]);
-		// listen connection from the created iframe
-		listenToConnection(clientId, clientId, origin);
 		// send a message to the created iframe
 		sendMessage('test-host', '1.0', `data from host to: ${clientId}`, [clientId]);
 	}
@@ -85,17 +85,9 @@
 		host.send({ type, version, data }, { to });
 	}
 
-	// host will listen to connection from given client id
-	function listenToConnection(clientId, iframeId, origin) {
-		host.listen(clientId, {
-			window: document.getElementById(iframeId).contentWindow,
-			origin,
-		});
-	}
-
 	// Function to add the iframe to the DOM
 	function addIframe(iframeHTML) {
-		var container = document.createElement('div');
+		const container = document.createElement('div');
 		container.innerHTML = iframeHTML;
 		document.body.appendChild(container);
 	}

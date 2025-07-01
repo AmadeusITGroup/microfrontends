@@ -1,0 +1,77 @@
+<meta
+	http-equiv="Content-Security-Policy"
+	content="
+  default-src 'self';
+  script-src 'self' 'unsafe-inline';
+  frame-src 'self' http://localhost:8092;
+"
+/>
+
+<base href="/listen/" />
+
+<h1>Host</h1>
+
+<br />
+<button id="disconnect" name="disconnect">Disconnect</button>
+<button id="listen" name="listen">Listen</button>
+<button id="stop-listening" name="stop-listening">Stop listening</button>
+<button id="send" name="send">Send</button>
+
+<h3>Messages</h3>
+<div id="host-messages"></div>
+
+<br />
+
+<iframe
+	id="client-0"
+	sandbox="allow-scripts allow-same-origin"
+	height="600px"
+	src="http://localhost:8092/listen/client-0.html"
+></iframe>
+
+<hr />
+
+<h1>Client 1</h1>
+
+<h3>Messages</h3>
+<div id="client-messages"></div>
+
+<script type="module">
+	import { MessagePeer } from '/core.js';
+
+	function onMessage(m) {
+		const messages = document.querySelector('#host-messages');
+		messages.innerHTML += `<div class="${m.from}-${m.payload.type}">${m.from}-${m.payload.type}</div>`;
+	}
+
+	function onClientMessage(m) {
+		const messages = document.querySelector('#client-messages');
+		messages.innerHTML += `<div class="${m.from}-${m.payload.type}">${m.from}-${m.payload.type}</div>`;
+	}
+
+	// HOST
+	const host = new MessagePeer({ id: 'host' });
+	host.messages.subscribe(onMessage);
+	host.serviceMessages.subscribe(onMessage);
+
+	const listener = host.listen();
+
+	// CLIENT
+	const client = new MessagePeer({ id: 'client-1' });
+	client.messages.subscribe(onClientMessage);
+	client.serviceMessages.subscribe(onClientMessage);
+
+	client.connect('host');
+
+	// ACTIONS
+	document.getElementById('listen').addEventListener('click', () => host.listen());
+	document.getElementById('stop-listening').addEventListener('click', () => listener.stop());
+	document.getElementById('disconnect').addEventListener('click', () => host.disconnect());
+
+	document.getElementById('send').addEventListener('click', () => {
+		host.send({
+			type: 'TEST-MESSAGE',
+			version: '1.0',
+		});
+	});
+</script>

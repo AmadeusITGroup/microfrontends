@@ -1,12 +1,13 @@
 import {
+	PeerConnectionFilter,
+	PeerConnectionOptions,
 	Message,
 	MessageError,
 	MessagePeer,
 	MessagePeerType,
-	PeerConnectionOptions,
 	PeerOptions,
-	PeerSendOptions,
 	RoutedMessage,
+	PeerSendOptions,
 	ServiceMessage,
 } from '@amadeus-it-group/microfrontends';
 import { from, Observable } from 'rxjs';
@@ -53,9 +54,9 @@ export const MESSAGE_PEER_CONNECT_OPTIONS = new InjectionToken<PeerConnectionOpt
 /**
  * Injection token for {@link PeerConnectionOptions} used as default options to pass to {@link MessagePeerService#listen}.
  */
-export const MESSAGE_PEER_LISTEN_OPTIONS = new InjectionToken<PeerConnectionOptions>(
-	'MESSAGE_PEER_LISTEN_OPTIONS',
-);
+export const MESSAGE_PEER_LISTEN_OPTIONS = new InjectionToken<
+	string | PeerConnectionFilter | (string | PeerConnectionFilter[])
+>('MESSAGE_PEER_LISTEN_OPTIONS');
 
 /**
  * Angular service that wraps {@link MessagePeer} and provides an observable for incoming messages and errors
@@ -109,19 +110,25 @@ export class MessagePeerService<M extends Message> implements MessagePeerService
 	/**
 	 * @inheritDoc
 	 */
-	public listen(peerId: string, options?: PeerConnectionOptions): Promise<() => void> {
-		return this.#peer.listen(
-			peerId,
-			this.#diListenOptions ? { ...this.#diListenOptions, ...options } : options,
-		);
+	public get peerConnections(): Map<string, Set<string>> {
+		return this.#peer.peerConnections;
 	}
 
 	/**
 	 * @inheritDoc
 	 */
-	public connect(peerId: string, options?: PeerConnectionOptions): Promise<() => void> {
+	public listen(
+		filters?: string | PeerConnectionFilter | (string | PeerConnectionFilter)[],
+	): () => void {
+		return this.#peer.listen(filters ? filters : this.#diListenOptions || undefined);
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public connect(remoteId: string, options?: PeerConnectionOptions): Promise<() => void> {
 		return this.#peer.connect(
-			peerId,
+			remoteId,
 			this.#diConnectOptions ? { ...this.#diConnectOptions, ...options } : options,
 		);
 	}
