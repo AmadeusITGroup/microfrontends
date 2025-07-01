@@ -1,4 +1,4 @@
-import { Injector } from '@angular/core';
+import { Component, inject, Injector } from '@angular/core';
 import {
 	MESSAGE_PEER_CONFIG,
 	MESSAGE_PEER_CONNECT_OPTIONS,
@@ -9,6 +9,7 @@ import {
 } from './message-peer.service';
 import type { Message, PeerConnectionOptions } from '@amadeus-it-group/microfrontends';
 import { MessagePeer } from '@amadeus-it-group/microfrontends';
+import { TestBed } from '@angular/core/testing';
 
 describe('MessagePeerService', () => {
 	let service: MessagePeerServiceType<Message>;
@@ -24,42 +25,42 @@ describe('MessagePeerService', () => {
 		jest.restoreAllMocks();
 	});
 
-	it('should be created', () => {
+	test('should be created', () => {
 		expect(service).toBeTruthy();
 	});
 
-	it('should have the correct id', () => {
+	test('should have the correct id', () => {
 		expect(service.id).toBe(config.id);
 	});
 
-	it('should register a message', () => {
+	test('should register a message', () => {
 		const message = { type: 'new', version: '1.0' };
 		service.registerMessage(message);
 		expect(service.knownPeers.get(config.id)).toContain(message);
 	});
 
-	it('should send a message', () => {
+	test('should send a message', () => {
 		const message = { type: 'new', version: '1.0' };
 		const sendSpy = jest.spyOn(MessagePeer.prototype, 'send').mockImplementation();
 		service.send(message);
 		expect(sendSpy).toHaveBeenCalledWith(message, undefined);
 	});
 
-	it('should listen for messages', () => {
+	test('should listen for messages', () => {
 		const peerId = 'peer-id';
 		const listenSpy = jest.spyOn(MessagePeer.prototype, 'listen').mockImplementation();
 		service.listen(peerId);
 		expect(listenSpy).toHaveBeenCalledWith(peerId);
 	});
 
-	it('should connect to a peer', async () => {
+	test('should connect to a peer', async () => {
 		const peerId = 'peer-id';
 		const connectSpy = jest.spyOn(MessagePeer.prototype, 'connect').mockImplementation();
 		await service.connect(peerId);
 		expect(connectSpy).toHaveBeenCalledWith(peerId, undefined);
 	});
 
-	it('should disconnect from a peer', () => {
+	test('should disconnect from a peer', () => {
 		const peerId = 'peer-id';
 		const disconnectSpy = jest.spyOn(MessagePeer.prototype, 'disconnect').mockImplementation();
 		service.disconnect(peerId);
@@ -123,6 +124,64 @@ describe('MessagePeerService Interactions', () => {
 			{ type: 'connect', version: '1.0' },
 		]);
 		expect(errors).toEqual(['Unknown message version "2.0". Known versions: ["1.0"]']);
+	});
+});
+
+describe('MessagePeerService destruction', () => {
+	@Component({
+		selector: 'lib-app1',
+		template: '',
+		providers: [MessagePeerService, { provide: MESSAGE_PEER_CONFIG, useValue: { id: 'app1' } }],
+	})
+	class App1Component {
+		service = inject(MessagePeerService);
+	}
+
+	@Component({
+		selector: 'lib-app2',
+		template: '',
+		providers: [MessagePeerService, { provide: MESSAGE_PEER_CONFIG, useValue: { id: 'app2' } }],
+	})
+	class App2Component {
+		service = inject(MessagePeerService);
+	}
+
+	test('should disconnect and stop listening on destruction', () => {
+		jest.spyOn(MessagePeerService.prototype, 'ngOnDestroy');
+		jest.spyOn(MessagePeerService.prototype, 'disconnect');
+
+		const app1 = TestBed.createComponent(App1Component);
+		const { service: s1 } = app1.componentInstance;
+
+		const app2 = TestBed.createComponent(App2Component);
+		const { service: s2 } = app2.componentInstance;
+
+		const messages: any[] = [];
+		s2.serviceMessages$.subscribe(({ payload }) =>
+			messages.push({ type: payload.type, version: payload.version }),
+		);
+
+		// connect and handshake
+		s1.listen();
+		s2.connect('app1');
+		expect(messages).toEqual([
+			{ type: 'handshake', version: '1.0' },
+			{ type: 'connect', version: '1.0' },
+		]);
+
+		// destroy app1 -> disconnect
+		messages.length = 0;
+		app1.destroy();
+		expect(messages).toEqual([{ type: 'disconnect', version: '1.0' }]);
+
+		// try to connect again -> app1 stopped listening
+		messages.length = 0;
+		s2.connect('app1');
+		expect(messages).toEqual([]);
+	});
+
+	afterEach(() => {
+		jest.restoreAllMocks();
 	});
 });
 

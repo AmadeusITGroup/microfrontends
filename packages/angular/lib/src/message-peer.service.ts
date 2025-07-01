@@ -11,7 +11,7 @@ import {
 	ServiceMessage,
 } from '@amadeus-it-group/microfrontends';
 import { from, Observable } from 'rxjs';
-import { inject, Injectable, InjectionToken } from '@angular/core';
+import { inject, Injectable, InjectionToken, OnDestroy } from '@angular/core';
 
 /**
  * Interface for the peer service that provides an observable for incoming messages
@@ -63,8 +63,11 @@ export const MESSAGE_PEER_LISTEN_OPTIONS = new InjectionToken<
  * It is essentially just a wrapper around {@link MessagePeer} that integrates with Angular's DI system.
  */
 @Injectable({ providedIn: 'root' })
-export class MessagePeerService<M extends Message> implements MessagePeerServiceType<M> {
+export class MessagePeerService<M extends Message> implements MessagePeerServiceType<M>, OnDestroy {
 	readonly #peer: MessagePeerType<M>;
+	#stopListening: () => void = () => {
+		// noop, will be set later
+	};
 	readonly #diConnectOptions = inject(MESSAGE_PEER_CONNECT_OPTIONS, { optional: true });
 	readonly #diListenOptions = inject(MESSAGE_PEER_LISTEN_OPTIONS, { optional: true });
 	/**
@@ -91,6 +94,11 @@ export class MessagePeerService<M extends Message> implements MessagePeerService
 		this.messages$ = from(this.#peer.messages);
 		this.serviceMessages$ = from(this.#peer.serviceMessages);
 		this.errors$ = from(this.#peer.errors);
+	}
+
+	ngOnDestroy(): void {
+		this.disconnect();
+		this.#stopListening();
 	}
 
 	/**
@@ -120,7 +128,8 @@ export class MessagePeerService<M extends Message> implements MessagePeerService
 	public listen(
 		filters?: string | PeerConnectionFilter | (string | PeerConnectionFilter)[],
 	): () => void {
-		return this.#peer.listen(filters ? filters : this.#diListenOptions || undefined);
+		this.#stopListening = this.#peer.listen(filters ? filters : this.#diListenOptions || undefined);
+		return this.#stopListening;
 	}
 
 	/**
