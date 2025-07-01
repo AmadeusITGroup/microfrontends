@@ -1,3 +1,66 @@
+# [0.0.8](https://github.com/AmadeusITGroup/microfrontends/compare/0.0.7...0.0.8) (2025-07-01)
+
+Introduces the [new `.listen()` API](https://github.com/AmadeusITGroup/microfrontends/blob/main/packages/core/README.md#listening-for-connections) and adds support for Angular 20.
+
+**New listening API**
+
+Listening happens in the background until you stop it explicitly. This allows you to start listening for handshake from multiple peers at once, using a variety of ways to accept or decline incoming connections.
+
+```ts
+// start listening for specific incoming connections
+const stop = peer.listen(/* filter using ids, objects, or a custom function */);
+
+// stop listening
+stop();
+```
+
+### Features
+
+- Introduce the new `.listen()` API ([dc1907c](https://github.com/AmadeusITGroup/microfrontends/commit/dc1907c6eebf513e97c776a605ad14dc916a4541))
+- Introduce the `Peer.peerConnections` API and harmonize connection messages ([668c8d2](https://github.com/AmadeusITGroup/microfrontends/commit/668c8d29a537baeb8eeee8da5db4c2cbe4d170be))
+- Expose `'handshake'` message to the user in `serviceMessages` ([55b83a2](https://github.com/AmadeusITGroup/microfrontends/commit/55b83a257d124f8673ea721ca1e81868ffb58a7d))
+
+### Fixes
+
+- `MessagePeerService` should disconnect and stop listening in `ngOnDestroy`([9feba99
+  ](https://github.com/AmadeusITGroup/microfrontends/commit/9feba9907821a1570c8d80338aaab8d74f1b1d91))
+
+### BREAKING CHANGES
+
+- new `.listen()` API returns a function that stops listening
+
+```ts
+// BEFORE
+const disconnect = await peer.listen('foo'); // start listening for 'two'
+disconnect(); // disconnect, no way you can stop listening
+
+// AFTER
+const stop = peer.listen('foo'); // start listening
+stop(); // stop listening
+peer.disconnect('foo'); // disconnect from peer 'two'
+```
+
+- new `.listen()` API changes the way of listening for multiple connections
+
+```ts
+// BEFORE
+peer.listen('foo'); // start listening for 'foo'
+peer.listen('bar'); // start listening for 'bar' <- this will not work as expected before
+
+// AFTER
+// In new version the example above would not work
+// it would stop listening for 'foo' and start listening for 'bar'.
+// Ideally you should call `.listen()` only once. ex:
+peer.listen(['foo', 'bar']); // start listening for connections from both 'foo' and 'bar'
+// or
+peer.listen(); // allow any connection unitl stopped listening
+// or
+peer.listen((message, source, origin) => {
+  // accept or decline connection based on the handshake message, source and origin
+  return ['foo', 'bar'].includes(message.from);
+});
+```
+
 # [0.0.7](https://github.com/AmadeusITGroup/microfrontends/compare/0.0.6...0.0.7) (2025-04-11)
 
 ### Features
