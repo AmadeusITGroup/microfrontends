@@ -461,14 +461,7 @@ export class MessagePeer<M extends Message> implements MessagePeerType<M> {
 		const { remoteId } = payload;
 
 		// -> (structure ok; 'handshake' for us)
-		// 1. Do we already have a connection to this peer?
-		if (this.#endpoints.has(remoteId)) {
-			logger(`PEER(${this.id}): HS declined: already connected to '${remoteId}'`);
-			return;
-		}
-
-		// -> (structure ok; 'handshake' for us; no existing; accepting)
-		// 2. Does the peer match our filters?
+		// 1. Does the peer match our filters?
 		if (!eventMatchesFilters(event, this.#connectionFilters)) {
 			logger(
 				`PEER(${this.id}): HS declined: connection from '${remoteId}' does not match any of the filters:`,
@@ -477,7 +470,15 @@ export class MessagePeer<M extends Message> implements MessagePeerType<M> {
 			return;
 		}
 
-		// -> (structure ok; 'handshake' for us; no existing; accepting; matches filters)
+		// -> (structure ok; 'handshake' for us; matches filters)
+		// 2. Do we already have a connection to this peer?
+		const exisingEndpoint = this.#endpoints.get(remoteId);
+		if (exisingEndpoint) {
+			logger(`PEER(${this.id}): already connected to '${remoteId}' -> disconnecting`);
+			this.#disconnectEndpoint(exisingEndpoint);
+		}
+
+		// -> (structure ok; 'handshake' for us; matches filters; handled exising)
 		// 3. Create a new endpoint for the peer, configure, and register it
 		const [port] = ports;
 

@@ -2007,6 +2007,171 @@ describe('Peer', () => {
 		]);
 	});
 
+	test(`should disconnect exising when reconnecting with the same id`, () => {
+		const [one, two, oldThree] = createPeerTree();
+		clearMessages();
+
+		// 1-2, 1-3
+		// simulating reconnection 1-3, different peer instance, same id
+		const newThree = createPeer('three');
+		newThree.connect('one');
+
+		// should have received 'disconnect' message and become detached
+		expect(oldThree.peerConnections).toEqual(new Map());
+		expect(oldThree.knownPeers).toEqual(new Map([['three', knownMessages]]));
+
+		// network should stay the same
+		expect(one.peerConnections).toEqual(
+			new Map([
+				['two', new Set(['two'])],
+				['three', new Set(['three'])],
+			]),
+		);
+		expect(two.peerConnections).toEqual(new Map([['one', new Set(['one', 'three'])]]));
+		expect(newThree.peerConnections).toEqual(new Map([['one', new Set(['one', 'two'])]]));
+
+		// network should stay the same
+		for (const peer of [one, two, newThree]) {
+			expect(peer.knownPeers).toEqual(
+				new Map([
+					['one', knownMessages],
+					['two', knownMessages],
+					['three', knownMessages],
+				]),
+			);
+		}
+
+		expectMessages(onMessage, [
+			// on 3.connect(1) existing 'three' should get disconnected
+			{
+				three: {
+					from: 'one',
+					to: [],
+					payload: {
+						type: 'disconnect',
+						version: '1.0',
+						disconnected: 'one',
+						unreachable: ['one', 'two'],
+					},
+				},
+			},
+			{
+				two: {
+					from: 'one',
+					to: [],
+					payload: {
+						type: 'disconnect',
+						version: '1.0',
+						disconnected: 'three',
+						unreachable: ['three'],
+					},
+				},
+			},
+			// Handle handshake as in normal connection:
+			// 3 -> 1 handshake
+			// 1 -> 2 connect(3)
+			// 1 -> 3 handshake
+			// 3 -> 1 connect(3)
+			// 1 -> 3 connect(1,2)
+			{
+				one: {
+					from: 'three',
+					to: ['one'],
+					payload: {
+						type: 'handshake',
+						endpointId: 'one',
+						remoteId: 'three',
+						version: '1.0',
+						knownPeers: new Map([['three', [{ type: 'known', version: '1.0' }]]]),
+					},
+				},
+			},
+			{
+				two: {
+					from: 'one',
+					to: [],
+					payload: {
+						type: 'connect',
+						version: '1.0',
+						knownPeers: new Map([['three', [{ type: 'known', version: '1.0' }]]]),
+						connected: ['three'],
+					},
+				},
+			},
+			{
+				three: {
+					from: 'one',
+					to: ['three'],
+					payload: {
+						type: 'handshake',
+						endpointId: 'three',
+						remoteId: 'one',
+						version: '1.0',
+						knownPeers: new Map([
+							['one', [{ type: 'known', version: '1.0' }]],
+							['two', [{ type: 'known', version: '1.0' }]],
+						]),
+					},
+				},
+			},
+			{
+				one: {
+					from: 'three',
+					to: ['one'],
+					payload: {
+						type: 'connect',
+						version: '1.0',
+						knownPeers: new Map([['three', [{ type: 'known', version: '1.0' }]]]),
+						connected: ['three'],
+					},
+				},
+			},
+			{
+				three: {
+					from: 'one',
+					to: ['three'],
+					payload: {
+						type: 'connect',
+						version: '1.0',
+						knownPeers: new Map([
+							['one', [{ type: 'known', version: '1.0' }]],
+							['two', [{ type: 'known', version: '1.0' }]],
+						]),
+						connected: ['one', 'two'],
+					},
+				},
+			},
+		]);
+		expectErrors(onError, []);
+	});
+
+	test(`should not disconnect exising when reconnecting with the same id and using filter`, () => {
+		const one = createPeer('one');
+		const two = createPeer('two');
+
+		// 1-2
+		one.listen(({ from }) => !one.knownPeers.has(from));
+		two.connect('one');
+
+		for (const peer of [one, two]) {
+			expect(peer.knownPeers).toEqual(
+				new Map([
+					['one', knownMessages],
+					['two', knownMessages],
+				]),
+			);
+		}
+
+		clearMessages();
+
+		// simulating reconnection 1-2, different peer instance, same id
+		const newTwo = createPeer('two');
+		newTwo.connect('one');
+
+		// no messages should be sent, handshake should be blocked by filter
+		expectMessages(onMessage, []);
+	});
+
 	test(`should register new messages`, () => {
 		const one = createPeer('one', { knownMessages: [] });
 		const two = createPeer('two', { knownMessages: [] });
