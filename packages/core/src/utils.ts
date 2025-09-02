@@ -13,7 +13,7 @@ let LOGGING_ENABLED = false;
  * If true, tracing information to help debugging will be logged in the console
  * @param enabled
  */
-export function enableLogging(enabled: boolean) {
+export function enableLogging(enabled = true) {
 	LOGGING_ENABLED = enabled;
 }
 

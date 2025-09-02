@@ -11,7 +11,7 @@ import { enableLogging } from '@amadeus-it-group/microfrontends';
 export const appConfig: ApplicationConfig = {
 	providers: [
 		provideAppInitializer(() => {
-			enableLogging(true);
+			enableLogging();
 		}),
 		provideZonelessChangeDetection(),
 		provideRouter(routes, withHashLocation()),

@@ -207,7 +207,7 @@ Simple logging can be enabled via `enableLogging()` method. It will log all mess
 ```ts
 import { enableLogging } from '@amadeus-it-group/microfrontends';
 
-enableLogging(true);
+enableLogging();
 ```
 
 ### Information about the network
