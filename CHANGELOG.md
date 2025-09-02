@@ -1,3 +1,13 @@
+# [0.0.9](https://github.com/AmadeusITGroup/microfrontends/compare/0.0.8...0.0.9) (2025-09-02)
+
+### Features
+
+- provide default value for `enableLogging()` ([3043f82](https://github.com/AmadeusITGroup/microfrontends/commit/3043f82c79c73bcd5cd67be353a13e11b8222c68))
+
+### Fixes
+
+- allow reconnecting with the same peer id ([20cbc51](https://github.com/AmadeusITGroup/microfrontends/commit/20cbc51d5560e9442d5a3a84ddf355de6e8ca3d1))
+
 # [0.0.8](https://github.com/AmadeusITGroup/microfrontends/compare/0.0.7...0.0.8) (2025-07-01)
 
 Introduces the [new `.listen()` API](https://github.com/AmadeusITGroup/microfrontends/blob/main/packages/core/README.md#listening-for-connections) and adds support for Angular 20.
