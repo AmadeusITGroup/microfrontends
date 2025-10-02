@@ -20,15 +20,17 @@
 		"test": {
 			"command": "playwright test",
 			"dependencies": [
-				"../core:build"
+				"../core:build",
+				"lint"
 			],
 			"files": [
 				"cases/**",
 				"tests/**",
-				"./*.*"
+				"playwright.config.ts"
 			],
 			"output": [
-				"test-results/**"
+				"test-results/**",
+				"playwright-report/**"
 			]
 		},
 		"lint": {
@@ -36,7 +38,7 @@
 			"files": [
 				"cases/**",
 				"tests/**",
-				"./*.*"
+				"playwright.config.ts"
 			],
 			"output": []
 		}

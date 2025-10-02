@@ -1,6 +1,7 @@
 {
 	"name": "app-angular",
 	"private": true,
+	"type": "module",
 	"scripts": {
 		"build": "wireit",
 		"demo": "wireit",
@@ -9,17 +10,18 @@
 		"livereload": "livereload dist/browser",
 		"watch": "npm run build --watch"
 	},
-	"type": "module",
 	"wireit": {
 		"build": {
 			"command": "ng build -c development",
 			"dependencies": [
-				"../../packages/angular:build"
+				"../../packages/angular:build",
+				"lint"
 			],
 			"files": [
-				"src/**/*.*",
+				"src/**",
 				"angular.json",
-				"tsconfig.json"
+				"tsconfig.json",
+				"tsconfig.app.json"
 			],
 			"output": [
 				"dist/**"
@@ -30,9 +32,25 @@
 			"dependencies": [
 				"../../packages/angular:build:prod"
 			],
+			"files": [
+				"src/**",
+				"angular.json",
+				"tsconfig.json",
+				"tsconfig.app.json"
+			],
 			"output": [
 				"dist/**"
 			]
+		},
+		"lint": {
+			"command": "eslint",
+			"files": [
+				"src/**",
+				"angular.json",
+				"tsconfig.json",
+				"tsconfig.app.json"
+			],
+			"output": []
 		},
 		"demo": {
 			"command": "run-p livereload watch serve",
