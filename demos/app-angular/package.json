@@ -5,9 +5,9 @@
 	"scripts": {
 		"build": "wireit",
 		"demo": "wireit",
-		"lint": "ng lint",
-		"serve": "ws -d dist/browser -p 8080 -z",
-		"livereload": "livereload dist/browser",
+		"lint": "wireit",
+		"serve": "ws -d dist/app-angular/browser -p 8080 -z",
+		"livereload": "livereload dist/app-angular/browser",
 		"watch": "npm run build --watch"
 	},
 	"wireit": {

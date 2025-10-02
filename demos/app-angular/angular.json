@@ -10,12 +10,9 @@
 			"prefix": "app",
 			"architect": {
 				"build": {
-					"builder": "@angular-devkit/build-angular:application",
+					"builder": "@angular/build:application",
 					"options": {
-						"outputPath": "dist",
-						"index": "src/index.html",
 						"browser": "src/main.ts",
-						"polyfills": [],
 						"tsConfig": "tsconfig.app.json",
 						"assets": [
 							{
@@ -28,18 +25,6 @@
 					},
 					"configurations": {
 						"production": {
-							"budgets": [
-								{
-									"type": "initial",
-									"maximumWarning": "500kB",
-									"maximumError": "1MB"
-								},
-								{
-									"type": "anyComponentStyle",
-									"maximumWarning": "4kB",
-									"maximumError": "8kB"
-								}
-							],
 							"outputHashing": "all"
 						},
 						"development": {
@@ -51,7 +36,7 @@
 					"defaultConfiguration": "production"
 				},
 				"serve": {
-					"builder": "@angular-devkit/build-angular:dev-server",
+					"builder": "@angular/build:dev-server",
 					"configurations": {
 						"production": {
 							"buildTarget": "app-angular:build:production"
@@ -68,9 +53,6 @@
 						"lintFilePatterns": ["src/**/*.ts", "src/**/*.html", "./*.ts"],
 						"eslintConfig": "eslint.config.js"
 					}
-				},
-				"extract-i18n": {
-					"builder": "@angular-devkit/build-angular:extract-i18n"
 				}
 			}
 		}
