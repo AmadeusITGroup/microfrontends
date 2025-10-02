@@ -1,0 +1,44 @@
+{
+	"name": "angular-e2e",
+	"private": true,
+	"scripts": {
+		"test": "wireit",
+		"tdd": "wireit",
+		"lint": "wireit"
+	},
+	"wireit": {
+		"tdd": {
+			"command": "playwright test --ui",
+			"dependencies": [
+				"../../demos/app-angular-ssr:demo"
+			]
+		},
+		"test": {
+			"command": "playwright test",
+			"dependencies": [
+				"../../demos/app-angular-ssr:demo",
+				"lint"
+			],
+			"files": [
+				"tests/**",
+				"playwright.config.ts"
+			],
+			"output": [
+				"test-results/**",
+				"playwright-report/**"
+			]
+		},
+		"lint": {
+			"command": "eslint",
+			"files": [
+				"tests/**",
+				"playwright.config.ts"
+			],
+			"output": []
+		}
+	},
+	"devDependencies": {
+		"@playwright/test": "^1.49.0",
+		"@types/node": "^22.10.1"
+	}
+}
