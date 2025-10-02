@@ -38,7 +38,7 @@
 		},
 		"build:packages": {
 			"dependencies": [
-				"./packages/core:build:prod",
+				"./packages/core:build",
 				"./packages/angular:build:prod",
 				"./demos/app-angular:build:prod"
 			]

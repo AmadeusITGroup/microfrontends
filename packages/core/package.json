@@ -34,7 +34,6 @@
 	],
 	"scripts": {
 		"build": "wireit",
-		"build:prod": "npm run build",
 		"lint": "wireit",
 		"test": "wireit",
 		"tdd": "jest --watch",
@@ -53,9 +52,6 @@
 			],
 			"output": [
 				"dist/**"
-			],
-			"dependencies": [
-				"lint"
 			]
 		},
 		"watch": {

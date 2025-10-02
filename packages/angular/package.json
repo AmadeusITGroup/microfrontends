@@ -8,17 +8,23 @@
 		"build": "wireit",
 		"build:prod": "wireit",
 		"test": "wireit",
+		"watch": "wireit",
 		"tdd": "jest --watch",
 		"lint": "wireit"
 	},
 	"wireit": {
 		"build:prod": {
 			"command": "ng build -c production",
+			"files": [
+				"lib/**",
+				"angular.json",
+				"tsconfig.json"
+			],
 			"output": [
 				"dist/**"
 			],
 			"dependencies": [
-				"../core:build:prod"
+				"../core:build"
 			]
 		},
 		"build": {
@@ -36,22 +42,27 @@
 				"lint"
 			]
 		},
+		"watch": {
+			"command": "npm run build --watch",
+			"service": true
+		},
 		"test": {
 			"command": "jest --coverage",
 			"files": [
-				"lib/**/*.*"
+				"lib/**"
 			],
 			"output": [
 				"coverage/**"
 			],
 			"dependencies": [
-				"build"
+				"build",
+				"lint"
 			]
 		},
 		"lint": {
 			"command": "eslint",
 			"files": [
-				"lib/**/*.*"
+				"lib/**"
 			],
 			"output": []
 		}
