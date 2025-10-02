@@ -83,5 +83,8 @@ export const GLOBAL_HANDSHAKE_HANDLER = (handshakeEvent: HandshakeEvent<Handshak
 	}
 };
 
-window.addEventListener('message', GLOBAL_HANDSHAKE_HANDLER);
-window.addEventListener('handshake', GLOBAL_HANDSHAKE_HANDLER);
+// SSR: only add event listeners in a browser environment
+if (typeof window !== 'undefined') {
+	window.addEventListener('message', GLOBAL_HANDSHAKE_HANDLER);
+	window.addEventListener('handshake', GLOBAL_HANDSHAKE_HANDLER);
+}

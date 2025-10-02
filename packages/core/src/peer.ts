@@ -323,6 +323,13 @@ export class MessagePeer<M extends Message> implements MessagePeerType<M> {
 	public connect(remoteId: string, options?: PeerConnectionOptions): Promise<() => void> {
 		logger(`PEER(${this.id}): connecting to '${remoteId}'`);
 
+		// SSR: no connections possible in a non-browser environment
+		if (typeof window === 'undefined') {
+			return Promise.resolve(() => {
+				// noop
+			});
+		}
+
 		// 1. processing options
 		const hostWindow = options?.window || window;
 		const hostOrigin = options?.origin || window.origin;
