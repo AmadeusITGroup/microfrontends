@@ -67,7 +67,8 @@
 			"dependencies": [
 				"./packages/core:test",
 				"./packages/core-e2e:test",
-				"./packages/angular:test"
+				"./packages/angular:test",
+				"./packages/angular-e2e:test"
 			]
 		},
 		"lint": {
@@ -75,7 +76,9 @@
 				"./packages/core:lint",
 				"./packages/core-e2e:lint",
 				"./packages/angular:lint",
-				"./demos/app-angular:lint"
+				"./packages/angular-e2e:lint",
+				"./demos/app-angular:lint",
+				"./demos/app-angular-ssr:lint"
 			]
 		},
 		"ci": {
