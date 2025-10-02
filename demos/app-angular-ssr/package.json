@@ -1,0 +1,70 @@
+{
+	"name": "app-angular-ssr",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"build": "wireit",
+		"demo": "wireit",
+		"lint": "wireit",
+		"watch": "npm run build --watch"
+	},
+	"wireit": {
+		"build": {
+			"command": "ng build -c development",
+			"dependencies": [
+				"../../packages/angular:build",
+				"lint"
+			],
+			"files": [
+				"src/**/*.*",
+				"angular.json",
+				"tsconfig.json",
+				"tsconfig.app.json"
+			],
+			"output": [
+				"dist/**"
+			]
+		},
+		"build:prod": {
+			"command": "ng build",
+			"dependencies": [
+				"../../packages/angular:build"
+			],
+			"files": [
+				"src/**/*.*",
+				"angular.json",
+				"tsconfig.json",
+				"tsconfig.app.json"
+			],
+			"output": [
+				"dist/**"
+			]
+		},
+		"lint": {
+			"command": "eslint",
+			"files": [
+				"src/**",
+				"angular.json",
+				"tsconfig.json",
+				"tsconfig.app.json"
+			],
+			"output": []
+		},
+		"demo": {
+			"command": "node dist/app-angular-ssr/server/server.mjs",
+			"dependencies": [
+				"build:prod"
+			],
+			"service": true
+		}
+	},
+	"dependencies": {
+		"@angular/platform-server": "^20.3.0",
+		"@angular/ssr": "^20.3.3",
+		"express": "^5.1.0"
+	},
+	"devDependencies": {
+		"@types/express": "^5.0.1",
+		"@types/node": "^20.19.19"
+	}
+}

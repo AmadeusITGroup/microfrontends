@@ -23,6 +23,7 @@
 		"build": "wireit",
 		"package": "wireit",
 		"demo": "wireit",
+		"demo-ssr": "wireit",
 		"test": "wireit",
 		"lint": "wireit",
 		"format": "prettier --check .",
@@ -40,19 +41,26 @@
 			"dependencies": [
 				"./packages/core:build",
 				"./packages/angular:build:prod",
-				"./demos/app-angular:build:prod"
+				"./demos/app-angular:build:prod",
+				"./demos/app-angular-ssr:build:prod"
 			]
 		},
 		"build": {
 			"dependencies": [
 				"./packages/core:build",
 				"./packages/angular:build",
-				"./demos/app-angular:build"
+				"./demos/app-angular:build",
+				"./demos/app-angular-ssr:build"
 			]
 		},
 		"demo": {
 			"dependencies": [
 				"./demos/app-angular:demo"
+			]
+		},
+		"demo-ssr": {
+			"dependencies": [
+				"./demos/app-angular-ssr:demo"
 			]
 		},
 		"test": {
