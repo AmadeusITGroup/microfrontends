@@ -1,0 +1,64 @@
+{
+	"$schema": "../../node_modules/@angular/cli/lib/config/schema.json",
+	"version": 1,
+	"newProjectRoot": "projects",
+	"projects": {
+		"app-angular-ssr": {
+			"projectType": "application",
+			"root": "",
+			"sourceRoot": "src",
+			"prefix": "app",
+			"architect": {
+				"build": {
+					"builder": "@angular/build:application",
+					"options": {
+						"browser": "src/main.ts",
+						"tsConfig": "tsconfig.app.json",
+						"assets": [
+							{
+								"glob": "**/*",
+								"input": "public"
+							}
+						],
+						"styles": [],
+						"server": "src/main.server.ts",
+						"outputMode": "server",
+						"ssr": {
+							"entry": "src/server.ts"
+						}
+					},
+					"configurations": {
+						"production": {
+							"outputHashing": "all"
+						},
+						"development": {
+							"optimization": false,
+							"extractLicenses": false,
+							"sourceMap": true
+						}
+					},
+					"defaultConfiguration": "production"
+				},
+				"serve": {
+					"builder": "@angular/build:dev-server",
+					"configurations": {
+						"production": {
+							"buildTarget": "app-angular-ssr-2:build:production"
+						},
+						"development": {
+							"buildTarget": "app-angular-ssr-2:build:development"
+						}
+					},
+					"defaultConfiguration": "development"
+				},
+				"lint": {
+					"builder": "@angular-eslint/builder:lint",
+					"options": {
+						"lintFilePatterns": ["src/**/*.ts", "src/**/*.html", "./*.ts"],
+						"eslintConfig": "eslint.config.js"
+					}
+				}
+			}
+		}
+	}
+}
