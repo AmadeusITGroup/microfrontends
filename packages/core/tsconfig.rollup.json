@@ -2,5 +2,6 @@
 	"extends": "./tsconfig.json",
 	"compilerOptions": {
 		"noEmitOnError": true
-	}
+	},
+	"exclude": ["./src/**/*.spec.ts"]
 }

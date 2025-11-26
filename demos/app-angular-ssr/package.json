@@ -59,8 +59,8 @@
 		}
 	},
 	"dependencies": {
-		"@angular/platform-server": "^20.3.0",
-		"@angular/ssr": "^20.3.3",
+		"@angular/platform-server": "^21.0.0",
+		"@angular/ssr": "^21.0.0",
 		"express": "^5.1.0"
 	},
 	"devDependencies": {
