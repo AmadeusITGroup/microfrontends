@@ -1,3 +1,28 @@
+# [0.0.10](https://github.com/AmadeusITGroup/microfrontends/compare/0.0.9...0.0.10) (2025-11-26)
+
+Angular 21 support and new API for managing listen connection filters at runtime.
+
+```ts
+// new getter/setter
+peer.connectionFilters; // get current filters
+peer.connectionFilters = [
+  /* filters */
+]; // set new filters
+
+// listen changes
+peer.listen(); // will use existing filters and start listening
+peer.listen(newFilters); // will replace filters and start listening
+```
+
+### Features
+
+- add API to change listen connection filters ([91e266c](https://github.com/AmadeusITGroup/microfrontends/commit/91e266c78e00c65f2c3fb0527ac75b73a9908335))
+
+### Fixes
+
+- clean up `.listen()` API types ([d363169](https://github.com/AmadeusITGroup/microfrontends/commit/d3631696f528013a9520cb9925259838468fa9ff))
+- don't crash when trying to listen/connect in SSR environment ([1aca6cc](https://github.com/AmadeusITGroup/microfrontends/commit/1aca6ccbefcc1d40408ed07ef57efaed12217250))
+
 # [0.0.9](https://github.com/AmadeusITGroup/microfrontends/compare/0.0.8...0.0.9) (2025-09-02)
 
 ### Features
