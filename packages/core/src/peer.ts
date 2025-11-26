@@ -55,32 +55,38 @@ export type PeerConnectionFilterFn = (
 /**
  * Filter for incoming connections.
  */
-export interface PeerConnectionFilter {
-	/**
-	 * Id of a peer allowed to connect.
-	 */
-	id?: string;
-	/**
-	 * Window object for allowed incoming connections.
-	 * Default is `window` object of the current environment.
-	 * It can be used to connect to a different window or an iframe.
-	 */
-	source?: MessageEventSource;
-	/**
-	 * Origin of allowed incoming connections.
-	 * Default is `window.origin` of the current environment.
-	 * Used to verify that the connection is established with the correct window from different origin.
-	 */
-	origin?: string;
-}
+export type PeerConnectionFilter =
+	| string
+	| PeerConnectionFilterFn
+	| {
+			/**
+			 * Id of a peer allowed to connect.
+			 */
+			id?: string;
+			/**
+			 * Window object for allowed incoming connections.
+			 * Default is `window` object of the current environment.
+			 * It can be used to connect to a different window or an iframe.
+			 */
+			source?: MessageEventSource;
+			/**
+			 * Origin of allowed incoming connections.
+			 * Default is `window.origin` of the current environment.
+			 * Used to verify that the connection is established with the correct window from different origin.
+			 */
+			origin?: string;
+	  };
 
 /**
  * Normalized version of the connection filter
  * @internal
  */
-export type NormalizedPeerConnectionFilter = PeerConnectionFilter & {
+export interface NormalizedPeerConnectionFilter {
+	id?: string;
+	source?: MessageEventSource;
+	origin?: string;
 	predicate?: PeerConnectionFilterFn;
-};
+}
 
 /**
  * Options to pass when sending a message to the network.
@@ -161,16 +167,11 @@ export interface MessagePeerType<M extends Message> {
 	 * Listens for incoming connections from any peers that match the provided filters.
 	 * @param filters - optional filters to use to accept incoming connections. If not provided,
 	 * accepts all incoming connections, otherwise tries to match at least one of the filters. Can be
-	 * a string with peer id, a {@link PeerConnectionFilter} object or an array of such objects.
+	 * a string with peer id, a {@link PeerConnectionFilter} object, a {@link PeerConnectionFilterFn}
+	 * or an array of such objects.
 	 * @returns a function that can be called to disconnect this peer from the network
 	 */
-	listen(
-		filters?:
-			| string
-			| PeerConnectionFilter
-			| PeerConnectionFilterFn
-			| readonly (string | PeerConnectionFilter)[],
-	): () => void;
+	listen(filters?: PeerConnectionFilter | PeerConnectionFilter[]): () => void;
 
 	/**
 	 * Sends a message to the network.
@@ -387,18 +388,11 @@ export class MessagePeer<M extends Message> implements MessagePeerType<M> {
 	/**
 	 * @inheritDoc
 	 */
-	public listen(
-		filters:
-			| string
-			| PeerConnectionFilter
-			| PeerConnectionFilterFn
-			| readonly (string | PeerConnectionFilter)[] = [],
-	): () => void {
+	public listen(filters: PeerConnectionFilter | PeerConnectionFilter[] = []): () => void {
 		// 1. normalizing filters
 		// making sure that we have only `ConnectionFilter` objects in an array
-		const normalizedFilters: NormalizedPeerConnectionFilter[] = Array.isArray(filters)
-			? filters.map(normalizeFilter)
-			: [normalizeFilter(filters as string | PeerConnectionFilter | PeerConnectionFilterFn)];
+		const filtersArray = Array.isArray(filters) ? filters : [filters];
+		const normalizedFilters = filtersArray.map((filter) => normalizeFilter(filter));
 
 		// checking that filters are correct
 		for (const { origin } of normalizedFilters) {

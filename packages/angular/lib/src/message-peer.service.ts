@@ -55,7 +55,7 @@ export const MESSAGE_PEER_CONNECT_OPTIONS = new InjectionToken<PeerConnectionOpt
  * Injection token for {@link PeerConnectionOptions} used as default options to pass to {@link MessagePeerService#listen}.
  */
 export const MESSAGE_PEER_LISTEN_OPTIONS = new InjectionToken<
-	string | PeerConnectionFilter | (string | PeerConnectionFilter[])
+	PeerConnectionFilter | PeerConnectionFilter[]
 >('MESSAGE_PEER_LISTEN_OPTIONS');
 
 /**
@@ -125,9 +125,7 @@ export class MessagePeerService<M extends Message> implements MessagePeerService
 	/**
 	 * @inheritDoc
 	 */
-	public listen(
-		filters?: string | PeerConnectionFilter | (string | PeerConnectionFilter)[],
-	): () => void {
+	public listen(filters?: PeerConnectionFilter | PeerConnectionFilter[]): () => void {
 		this.#stopListening = this.#peer.listen(filters ? filters : this.#diListenOptions || undefined);
 		return this.#stopListening;
 	}
