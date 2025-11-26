@@ -1,11 +1,7 @@
 import { HandshakeMessage, Message, RoutedMessage } from './message';
 import { MessageError } from './message-error';
 import { MessageCheckStrategy } from './checks';
-import {
-	NormalizedPeerConnectionFilter,
-	PeerConnectionFilter,
-	PeerConnectionFilterFn,
-} from './peer';
+import { NormalizedPeerConnectionFilter, PeerConnectionFilter } from './peer';
 
 let LOGGING_ENABLED = false;
 
@@ -82,9 +78,7 @@ export function checkOriginIsValid(origin: string) {
 	}
 }
 
-export function normalizeFilter(
-	filter: string | PeerConnectionFilter | PeerConnectionFilterFn,
-): NormalizedPeerConnectionFilter {
+export function normalizeFilter(filter: PeerConnectionFilter): NormalizedPeerConnectionFilter {
 	switch (typeof filter) {
 		case 'string':
 			return { id: filter };
