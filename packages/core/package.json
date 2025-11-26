@@ -36,7 +36,7 @@
 		"build": "wireit",
 		"lint": "wireit",
 		"test": "wireit",
-		"tdd": "jest --watch",
+		"tdd": "vitest --watch",
 		"watch": "wireit",
 		"pack": "npm pack"
 	},
@@ -59,7 +59,7 @@
 			"service": true
 		},
 		"test": {
-			"command": "jest --coverage",
+			"command": "vitest run --coverage",
 			"files": [
 				"src/**/*.*"
 			],

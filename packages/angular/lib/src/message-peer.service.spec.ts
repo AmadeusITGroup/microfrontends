@@ -10,6 +10,7 @@ import {
 import type { Message, PeerConnectionOptions } from '@amadeus-it-group/microfrontends';
 import { MessagePeer } from '@amadeus-it-group/microfrontends';
 import { TestBed } from '@angular/core/testing';
+import { vi } from 'vitest';
 
 describe('MessagePeerService', () => {
 	let service: MessagePeerServiceType<Message>;
@@ -22,7 +23,7 @@ describe('MessagePeerService', () => {
 	});
 
 	afterEach(() => {
-		jest.restoreAllMocks();
+		vi.restoreAllMocks();
 	});
 
 	test('should be created', () => {
@@ -41,28 +42,34 @@ describe('MessagePeerService', () => {
 
 	test('should send a message', () => {
 		const message = { type: 'new', version: '1.0' };
-		const sendSpy = jest.spyOn(MessagePeer.prototype, 'send').mockImplementation();
+		const sendSpy = vi.spyOn(MessagePeer.prototype, 'send').mockImplementation(() => undefined);
 		service.send(message);
 		expect(sendSpy).toHaveBeenCalledWith(message, undefined);
 	});
 
 	test('should listen for messages', () => {
 		const peerId = 'peer-id';
-		const listenSpy = jest.spyOn(MessagePeer.prototype, 'listen').mockImplementation();
+		const listenSpy = vi
+			.spyOn(MessagePeer.prototype, 'listen')
+			.mockImplementation(() => () => undefined);
 		service.listen(peerId);
 		expect(listenSpy).toHaveBeenCalledWith(peerId);
 	});
 
 	test('should connect to a peer', async () => {
 		const peerId = 'peer-id';
-		const connectSpy = jest.spyOn(MessagePeer.prototype, 'connect').mockImplementation();
+		const connectSpy = vi
+			.spyOn(MessagePeer.prototype, 'connect')
+			.mockImplementation(() => Promise.resolve(() => undefined));
 		await service.connect(peerId);
 		expect(connectSpy).toHaveBeenCalledWith(peerId, undefined);
 	});
 
 	test('should disconnect from a peer', () => {
 		const peerId = 'peer-id';
-		const disconnectSpy = jest.spyOn(MessagePeer.prototype, 'disconnect').mockImplementation();
+		const disconnectSpy = vi
+			.spyOn(MessagePeer.prototype, 'disconnect')
+			.mockImplementation(() => undefined);
 		service.disconnect(peerId);
 		expect(disconnectSpy).toHaveBeenCalledWith(peerId);
 	});
@@ -97,7 +104,7 @@ describe('MessagePeerService Interactions', () => {
 	});
 
 	afterEach(() => {
-		jest.restoreAllMocks();
+		vi.restoreAllMocks();
 	});
 
 	test('should connect and exchange messages and errors', () => {
@@ -147,8 +154,8 @@ describe('MessagePeerService destruction', () => {
 	}
 
 	test('should disconnect and stop listening on destruction', () => {
-		jest.spyOn(MessagePeerService.prototype, 'ngOnDestroy');
-		jest.spyOn(MessagePeerService.prototype, 'disconnect');
+		vi.spyOn(MessagePeerService.prototype, 'ngOnDestroy');
+		vi.spyOn(MessagePeerService.prototype, 'disconnect');
 
 		const app1 = TestBed.createComponent(App1Component);
 		const { service: s1 } = app1.componentInstance;
@@ -181,13 +188,13 @@ describe('MessagePeerService destruction', () => {
 	});
 
 	afterEach(() => {
-		jest.restoreAllMocks();
+		vi.restoreAllMocks();
 	});
 });
 
 describe('MessagePeerService DI overrides', () => {
-	let connectSpy: jest.SpyInstance;
-	let listenSpy: jest.SpyInstance;
+	let connectSpy: ReturnType<typeof vi.spyOn>;
+	let listenSpy: ReturnType<typeof vi.spyOn>;
 	let injector: Injector;
 	const knownMessages = [{ type: 'test', version: '1.0' }];
 
@@ -199,8 +206,10 @@ describe('MessagePeerService DI overrides', () => {
 	const listenOptions = ['one', 'two'];
 
 	beforeEach(() => {
-		connectSpy = jest.spyOn(MessagePeer.prototype, 'connect').mockImplementation();
-		listenSpy = jest.spyOn(MessagePeer.prototype, 'listen').mockImplementation();
+		connectSpy = vi
+			.spyOn(MessagePeer.prototype, 'connect')
+			.mockImplementation(() => Promise.resolve(() => undefined));
+		listenSpy = vi.spyOn(MessagePeer.prototype, 'listen').mockImplementation(() => () => undefined);
 
 		injector = Injector.create({
 			providers: [
@@ -213,7 +222,7 @@ describe('MessagePeerService DI overrides', () => {
 	});
 
 	afterEach(() => {
-		jest.restoreAllMocks();
+		vi.restoreAllMocks();
 	});
 
 	test('should use the provided DI options', () => {

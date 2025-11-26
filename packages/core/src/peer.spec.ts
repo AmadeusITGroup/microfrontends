@@ -4,8 +4,9 @@ import { MessagePeer } from './peer';
 import { MessageError } from './message-error';
 import type { Message, RoutedMessage, ServiceMessage } from './message';
 import { from } from 'rxjs';
+import { vi } from 'vitest';
 
-window.dispatchEvent = jest.fn().mockImplementation((event: any) => {
+window.dispatchEvent = vi.fn().mockImplementation((event: any) => {
 	GLOBAL_HANDSHAKE_HANDLER(event);
 });
 
@@ -115,8 +116,8 @@ describe('Peer', () => {
 	}
 
 	beforeEach(() => {
-		onMessage = jest.fn();
-		onError = jest.fn();
+		onMessage = vi.fn();
+		onError = vi.fn();
 	});
 
 	describe('test use cases', () => {
@@ -2406,8 +2407,8 @@ describe('Peer', () => {
 	});
 
 	test(`should separate user messages and service messages`, () => {
-		const onMessage = jest.fn();
-		const onServiceMessage = jest.fn();
+		const onMessage = vi.fn();
+		const onServiceMessage = vi.fn();
 
 		const one = new MessagePeer<Message | ServiceMessage>({ id: 'one', knownMessages });
 		const two = new MessagePeer<Message | ServiceMessage>({
