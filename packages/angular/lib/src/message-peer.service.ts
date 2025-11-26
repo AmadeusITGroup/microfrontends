@@ -96,6 +96,20 @@ export class MessagePeerService<M extends Message> implements MessagePeerService
 		this.errors$ = from(this.#peer.errors);
 	}
 
+	/**
+	 * @inheritDoc
+	 */
+	get connectionFilters(): PeerConnectionFilter[] {
+		return this.#peer.connectionFilters;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	set connectionFilters(value: PeerConnectionFilter[]) {
+		this.#peer.connectionFilters = value;
+	}
+
 	ngOnDestroy(): void {
 		this.disconnect();
 		this.#stopListening();
