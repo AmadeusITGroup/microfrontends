@@ -89,6 +89,26 @@ export function normalizeFilter(filter: PeerConnectionFilter): NormalizedPeerCon
 	}
 }
 
+export function parseFilters(
+	filters: PeerConnectionFilter | PeerConnectionFilter[] | undefined,
+	current: PeerConnectionFilter[],
+	normalized: NormalizedPeerConnectionFilter[],
+) {
+	if (filters != null) {
+		const filtersArray = Array.isArray(filters) ? filters : [filters];
+		const normalizedFilters = filtersArray.map((filter) => normalizeFilter(filter));
+		for (const { origin } of normalizedFilters) {
+			if (origin !== undefined) {
+				checkOriginIsValid(origin);
+			}
+		}
+		current.length = 0;
+		current.push(...filtersArray);
+		normalized.length = 0;
+		normalized.push(...normalizedFilters);
+	}
+}
+
 export function createHandshakeMessage(
 	from: string,
 	to: string,

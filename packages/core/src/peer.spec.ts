@@ -2561,6 +2561,70 @@ describe('Peer', () => {
 		expect(listener1 === listener2).toBe(true);
 	});
 
+	test(`should reuse exising filters when calling '.listen()' after stop`, () => {
+		const one = new MessagePeer({ id: 'one' });
+		expect(one.connectionFilters).toEqual([]);
+
+		// 1. Change -> stop
+		// [] -> [two]
+		const stop = one.listen('two');
+		expect(one.connectionFilters).toEqual(['two']);
+
+		// not resetting filters on stop
+		stop();
+		expect(one.connectionFilters).toEqual(['two']);
+
+		// restarting with the same filters
+		one.listen();
+		expect(one.connectionFilters).toEqual(['two']);
+	});
+
+	test(`should allow updating '.listen()' filters via setter`, () => {
+		const one = new MessagePeer({ id: 'one' });
+		expect(one.connectionFilters).toEqual([]);
+
+		// Update via '.listen()'
+		// [] -> [two]
+		one.listen('two');
+		expect(one.connectionFilters).toEqual(['two']);
+
+		// Update via setter
+		// [two] -> [three]
+		one.connectionFilters = ['three'];
+		expect(one.connectionFilters).toEqual(['three']);
+	});
+
+	test(`should allow adding and removing '.listen()' filters`, () => {
+		const one = new MessagePeer({ id: 'one' });
+		one.connectionFilters = ['two'];
+		expect(one.connectionFilters).toEqual(['two']);
+
+		// 1. Update via array spread in '.listen()'
+		// [two] -> [two, three]
+		one.listen([...one.connectionFilters, 'three']);
+		expect(one.connectionFilters).toEqual(['two', 'three']);
+
+		// 2. Update via setter
+		// [two, three] -> [three]
+		one.connectionFilters = one.connectionFilters.filter((id) => id !== 'two');
+		expect(one.connectionFilters).toEqual(['three']);
+	});
+
+	test(`should use function filters for '.listen()'`, () => {
+		const one = new MessagePeer({ id: 'one' });
+		const two = new MessagePeer({ id: 'two' });
+
+		const calledWith: any[] = [];
+
+		one.listen(({ from, to, payload }, source, origin) => {
+			calledWith.push(`${from}->${to}:${payload.type}`, origin, source);
+			return true;
+		});
+		two.connect('one');
+
+		expect(calledWith).toEqual(['two->one:handshake', 'https://test.com', undefined]);
+	});
+
 	test(`should reuse the same connection when '.connect()' multiple times`, () => {
 		const two = new MessagePeer({ id: 'two' });
 

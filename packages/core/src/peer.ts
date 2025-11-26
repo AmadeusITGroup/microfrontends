@@ -15,7 +15,7 @@ import {
 	createHandshakeMessage,
 	eventMatchesFilters,
 	logger,
-	normalizeFilter,
+	parseFilters,
 } from './utils';
 import { getDefaultMessageChecks, MessageCheck, MessageCheckStrategy } from './checks';
 import { Emitter, Subscribable } from './emitter';
@@ -139,6 +139,16 @@ export interface MessagePeerType<M extends Message> {
 	get peerConnections(): Map<string, Set<string>>;
 
 	/**
+	 * List of current connection filters applied when listening for incoming connections.
+	 */
+	get connectionFilters(): PeerConnectionFilter[];
+
+	/**
+	 * Sets new connection filters to be applied when listening for incoming connections.
+	 */
+	set connectionFilters(value: PeerConnectionFilter[]);
+
+	/**
 	 * A {@link Subscribable} that emits a message received by the peer
 	 * To handle {@link ServiceMessage} like `connect` or `disconnect`, use the {@link MessagePeer#serviceMessages} stream.
 	 */
@@ -241,6 +251,7 @@ export class MessagePeer<M extends Message> implements MessagePeerType<M> {
 	readonly #endpoints = new Map<string, EndpointType<M>>();
 	readonly #endpointPeers = new Map<string, Set<string>>();
 
+	readonly #userConnectionFilters: PeerConnectionFilter[] = [];
 	readonly #connectionFilters: NormalizedPeerConnectionFilter[] = [];
 	readonly #stopListening: () => void;
 
@@ -270,7 +281,6 @@ export class MessagePeer<M extends Message> implements MessagePeerType<M> {
 		this.#stopListening = () => {
 			logger(`PEER(${this.id}): stopped listening for connections`);
 			unregisterGlobalHandshakeHandler(this.id);
-			this.#connectionFilters.length = 0;
 		};
 
 		logger(`PEER(${this.id}): created`, this.#knownPeers);
@@ -295,6 +305,20 @@ export class MessagePeer<M extends Message> implements MessagePeerType<M> {
 	 */
 	public get peerConnections(): Map<string, Set<string>> {
 		return this.#endpointPeers;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public get connectionFilters(): PeerConnectionFilter[] {
+		return this.#userConnectionFilters;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public set connectionFilters(value: PeerConnectionFilter[]) {
+		parseFilters(value, this.#userConnectionFilters, this.#connectionFilters);
 	}
 
 	/**
@@ -388,21 +412,9 @@ export class MessagePeer<M extends Message> implements MessagePeerType<M> {
 	/**
 	 * @inheritDoc
 	 */
-	public listen(filters: PeerConnectionFilter | PeerConnectionFilter[] = []): () => void {
+	public listen(filters?: PeerConnectionFilter | PeerConnectionFilter[]): () => void {
 		// 1. normalizing filters
-		// making sure that we have only `ConnectionFilter` objects in an array
-		const filtersArray = Array.isArray(filters) ? filters : [filters];
-		const normalizedFilters = filtersArray.map((filter) => normalizeFilter(filter));
-
-		// checking that filters are correct
-		for (const { origin } of normalizedFilters) {
-			if (origin !== undefined) {
-				checkOriginIsValid(origin);
-			}
-		}
-
-		this.#connectionFilters.length = 0;
-		this.#connectionFilters.push(...normalizedFilters);
+		parseFilters(filters, this.#userConnectionFilters, this.#connectionFilters);
 
 		// 2. accepting handshake messages
 		registerGlobalHandshakeHandler(this.id, this.#handleHandshakeEvent.bind(this));
