@@ -1,7 +1,6 @@
 {
 	"compileOnSave": false,
 	"compilerOptions": {
-		"outDir": "./dist",
 		"strict": true,
 		"strictNullChecks": true,
 		"noImplicitOverride": true,
@@ -18,8 +17,13 @@
 		"importHelpers": true,
 		"target": "ES2022",
 		"module": "ES2022",
-		"lib": ["ES2022", "dom"]
+		"lib": ["ES2022", "dom"],
+		"outDir": "./dist"
 	},
 	"include": ["./src/**/*.ts"],
-	"exclude": ["./src/**/*.spec.ts"]
+	"references": [
+		{
+			"path": "./tsconfig.spec.json"
+		}
+	]
 }
