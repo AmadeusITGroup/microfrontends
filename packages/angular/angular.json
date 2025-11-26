@@ -30,6 +30,14 @@
 						"lintFilePatterns": ["lib/**/*.ts", "lib/**/*.html", "./*.ts"],
 						"eslintConfig": "eslint.config.js"
 					}
+				},
+				"test": {
+					"builder": "@angular/build:unit-test",
+					"options": {
+						"tsConfig": "lib/tsconfig.spec.json",
+						"runnerConfig": "vitest.config.ts",
+						"coverage": true
+					}
 				}
 			}
 		}
