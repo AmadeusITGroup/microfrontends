@@ -18,10 +18,10 @@ test('switch-connection', async ({ page }) => {
 	expect(await disconnectMessages.count()).toBe(0);
 
 	// Locate first iframe
-	let frame0 = page.frame({ name: 'client-0' });
-	await frame0?.waitForSelector('.host-test-host');
-	expect(await frame0?.locator('.host-test-host')?.count()).toBe(1);
-	expect(await frame0?.locator('.host-connect')?.count()).toBe(1);
+	let frame0 = await waitForFrame(page, 'client-0');
+	await frame0.waitForSelector('.host-test-host');
+	expect(await frame0.locator('.host-test-host').count()).toBe(1);
+	expect(await frame0.locator('.host-connect').count()).toBe(1);
 
 	// simulate page change ###########################################
 	// when removing iframe0, iframe1 will be created
@@ -34,10 +34,10 @@ test('switch-connection', async ({ page }) => {
 	await page.waitForSelector('#client-1');
 
 	// Locate second iframe
-	const frame1 = page.frame({ name: 'client-1' });
-	await frame1?.waitForSelector('.host-test-host');
-	expect(await frame1?.locator('.host-test-host')?.count()).toBe(1);
-	expect(await frame1?.locator('.host-connect')?.count()).toBe(1);
+	const frame1 = await waitForFrame(page, 'client-1');
+	await frame1.waitForSelector('.host-test-host');
+	expect(await frame1.locator('.host-test-host').count()).toBe(1);
+	expect(await frame1.locator('.host-connect').count()).toBe(1);
 
 	// in host: 2 connect and one disconnect message
 	expect(await messages.count()).toBe(4);
@@ -52,11 +52,11 @@ test('switch-connection', async ({ page }) => {
 	await page.waitForSelector('#client-0');
 
 	// Locate again iframe0
-	frame0 = page.frame({ name: 'client-0' });
+	frame0 = await waitForFrame(page, 'client-0');
 	// wait for message received from host
-	await frame0?.waitForSelector('.host-test-host');
-	expect(await frame0?.locator('.host-test-host')?.count()).toBe(1);
-	expect(await frame0?.locator('.host-connect')?.count()).toBe(1);
+	await frame0.waitForSelector('.host-test-host');
+	expect(await frame0.locator('.host-test-host').count()).toBe(1);
+	expect(await frame0.locator('.host-connect').count()).toBe(1);
 
 	// in host: 3 connect and 2 disconnect messages
 	expect(await messages.count()).toBe(6);
@@ -71,6 +71,12 @@ test('switch-connection', async ({ page }) => {
 	expect(await connectContainer.locator('[class^="client-0"]').count()).toBe(2);
 	expect(await connectContainer.locator('[class^="client-1"]').count()).toBe(1);
 });
+
+async function waitForFrame(page: Page, name: string): Promise<Frame> {
+	await page.locator(`iframe[name="${name}"]`).waitFor();
+	await expect.poll(() => page.frame({ name }) !== null).toBe(true);
+	return page.frame({ name })!;
+}
 
 /**
  * Click disconnect button inside the iframe and remove the iframe element after that

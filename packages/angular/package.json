@@ -68,6 +68,6 @@
 		}
 	},
 	"devDependencies": {
-		"ng-packagr": "^21.0.0"
+		"ng-packagr": "^22.0.0"
 	}
 }

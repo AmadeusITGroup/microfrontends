@@ -16,8 +16,10 @@ import { inject, Injectable, InjectionToken, OnDestroy } from '@angular/core';
 /**
  * Interface for the peer service that provides an observable for incoming messages
  */
-export interface MessagePeerServiceType<M extends Message>
-	extends Omit<MessagePeerType<M>, 'messages' | 'serviceMessages' | 'errors'> {
+export interface MessagePeerServiceType<M extends Message> extends Omit<
+	MessagePeerType<M>,
+	'messages' | 'serviceMessages' | 'errors'
+> {
 	/**
 	 * Observable for incoming messages
 	 */

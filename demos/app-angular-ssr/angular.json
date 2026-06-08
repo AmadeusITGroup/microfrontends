@@ -23,6 +23,9 @@
 						"styles": [],
 						"server": "src/main.server.ts",
 						"outputMode": "server",
+						"security": {
+							"allowedHosts": ["localhost"]
+						},
 						"ssr": {
 							"entry": "src/server.ts"
 						}
@@ -43,10 +46,10 @@
 					"builder": "@angular/build:dev-server",
 					"configurations": {
 						"production": {
-							"buildTarget": "app-angular-ssr-2:build:production"
+							"buildTarget": "app-angular-ssr:build:production"
 						},
 						"development": {
-							"buildTarget": "app-angular-ssr-2:build:development"
+							"buildTarget": "app-angular-ssr:build:development"
 						}
 					},
 					"defaultConfiguration": "development"
