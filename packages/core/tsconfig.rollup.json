@@ -1,7 +1,8 @@
 {
 	"extends": "./tsconfig.json",
 	"compilerOptions": {
-		"noEmitOnError": true
+		"noEmitOnError": true,
+		"rootDir": "./src"
 	},
 	"exclude": ["./src/**/*.spec.ts"]
 }

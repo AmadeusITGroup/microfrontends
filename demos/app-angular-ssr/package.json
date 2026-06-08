@@ -59,12 +59,12 @@
 		}
 	},
 	"dependencies": {
-		"@angular/platform-server": "^21.0.0",
-		"@angular/ssr": "^21.0.0",
-		"express": "^5.1.0"
+		"@angular/platform-server": "^22.0.0",
+		"@angular/ssr": "^22.0.0",
+		"express": "^5.2.1"
 	},
 	"devDependencies": {
-		"@types/express": "^5.0.1",
-		"@types/node": "^20.19.19"
+		"@types/express": "^5.0.6",
+		"@types/node": "^25.9.2"
 	}
 }
