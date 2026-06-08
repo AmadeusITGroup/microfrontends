@@ -1,3 +1,9 @@
+# [0.0.11](https://github.com/AmadeusITGroup/microfrontends/compare/0.0.10...0.0.11) (2026-06-08)
+
+Angular 22 support and Node 24 tooling updates.
+
+The Angular package now supports Angular 20, 21 and 22.
+
 # [0.0.10](https://github.com/AmadeusITGroup/microfrontends/compare/0.0.9...0.0.10) (2025-11-26)
 
 Angular 21 support and new API for managing listen connection filters at runtime.
